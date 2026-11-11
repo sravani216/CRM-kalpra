@@ -83,7 +83,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     localStorage.removeItem('kalpra_crm_user');
     setUser(null);
     setToken(null);
-    window.location.href = '/login';
+    window.location.hash = '#/login';
   };
 
   return (

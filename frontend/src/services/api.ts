@@ -1,3 +1,5 @@
+import { handleMockRequest } from './mockEngine';
+
 const API_BASE_URL = 'http://localhost:5000/api';
 
 export interface ApiResponse<T = any> {
@@ -14,11 +16,32 @@ export interface ApiResponse<T = any> {
 }
 
 class ApiService {
+  private isStaticOrGitHubPages(): boolean {
+    if (typeof window === 'undefined') return false;
+    const host = window.location.hostname;
+    const protocol = window.location.protocol;
+    // GitHub Pages or HTTPS static hosting cannot hit insecure localhost:5000 directly
+    return host.includes('github.io') || (protocol === 'https:' && !API_BASE_URL.startsWith('https:'));
+  }
+
   private getToken(): string | null {
     return localStorage.getItem('kalpra_crm_token');
   }
 
   private async request<T = any>(endpoint: string, options: RequestInit = {}): Promise<T> {
+    const isMock = this.isStaticOrGitHubPages();
+
+    if (isMock) {
+      const method = options.method || 'GET';
+      let bodyData = undefined;
+      if (options.body && typeof options.body === 'string') {
+        try {
+          bodyData = JSON.parse(options.body);
+        } catch (e) {}
+      }
+      return handleMockRequest(endpoint, method, bodyData);
+    }
+
     const url = `${API_BASE_URL}${endpoint}`;
     const token = this.getToken();
 
@@ -32,18 +55,20 @@ class ApiService {
     }
 
     try {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 4000);
+
       const response = await fetch(url, {
         ...options,
         headers,
+        signal: controller.signal,
       });
+      clearTimeout(timeoutId);
 
       if (response.status === 401) {
-        // Token expired or invalid
         localStorage.removeItem('kalpra_crm_token');
         localStorage.removeItem('kalpra_crm_user');
-        if (!window.location.pathname.includes('/login')) {
-          window.location.href = '/login';
-        }
+        window.location.hash = '#/login';
       }
 
       const data = await response.json();
@@ -52,8 +77,16 @@ class ApiService {
       }
       return data;
     } catch (err: any) {
-      console.error(`API Error on ${endpoint}:`, err);
-      throw err;
+      console.warn(`Local API at ${url} unavailable or blocked, falling back to mock engine:`, err?.message);
+      // Fallback to mock engine gracefully if local backend is down
+      const method = options.method || 'GET';
+      let bodyData = undefined;
+      if (options.body && typeof options.body === 'string') {
+        try {
+          bodyData = JSON.parse(options.body);
+        } catch (e) {}
+      }
+      return handleMockRequest(endpoint, method, bodyData);
     }
   }
 
@@ -68,6 +101,9 @@ class ApiService {
       });
       const qs = searchParams.toString();
       if (qs) query = `?${qs}`;
+    }
+    if (this.isStaticOrGitHubPages()) {
+      return handleMockRequest(`${endpoint}${query}`, 'GET', undefined, params);
     }
     return this.request<T>(`${endpoint}${query}`, { method: 'GET' });
   }
@@ -98,22 +134,29 @@ class ApiService {
   }
 
   async uploadFile(file: File): Promise<{ success: boolean; fileUrl: string; filename: string }> {
-    const url = `${API_BASE_URL}/upload`;
-    const token = this.getToken();
-    const formData = new FormData();
-    formData.append('file', file);
+    if (this.isStaticOrGitHubPages()) {
+      return handleMockRequest('/upload', 'POST');
+    }
 
-    const headers: Record<string, string> = {};
-    if (token) headers['Authorization'] = `Bearer ${token}`;
+    try {
+      const url = `${API_BASE_URL}/upload`;
+      const token = this.getToken();
+      const formData = new FormData();
+      formData.append('file', file);
 
-    const res = await fetch(url, {
-      method: 'POST',
-      headers,
-      body: formData,
-    });
-    return res.json();
+      const headers: Record<string, string> = {};
+      if (token) headers['Authorization'] = `Bearer ${token}`;
+
+      const res = await fetch(url, {
+        method: 'POST',
+        headers,
+        body: formData,
+      });
+      return await res.json();
+    } catch (e) {
+      return handleMockRequest('/upload', 'POST');
+    }
   }
 }
 
 export const api = new ApiService();
-

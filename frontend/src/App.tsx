@@ -1,5 +1,5 @@
 import React from 'react';
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { HashRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { NotificationProvider } from './context/NotificationContext';
 import { AppLayout } from './components/layout/AppLayout';
@@ -38,7 +38,7 @@ const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) =
 
 export const App: React.FC = () => {
   return (
-    <BrowserRouter>
+    <HashRouter>
       <AuthProvider>
         <NotificationProvider>
           <Routes>
@@ -69,7 +69,7 @@ export const App: React.FC = () => {
           </Routes>
         </NotificationProvider>
       </AuthProvider>
-    </BrowserRouter>
+    </HashRouter>
   );
 };
 
