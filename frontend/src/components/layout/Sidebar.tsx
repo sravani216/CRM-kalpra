@@ -32,36 +32,40 @@ export const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, setIsCollapsed })
 
   const role = user.role;
 
-  // Exact Role-Based Modules strictly adhering to user instructions:
-  // 1. Employee (5 Modules): User Dashboard, Lead Management, Task and Schedule, Progress Module, Field Tracking
-  // 2. Admin / Marketing Head (3 Modules): The Dashboard, Clients Management, Team Management
-  // 3. CEO: Single page without modules
-
-  let navItems: { name: string; path: string; icon: any; badge?: string }[] = [];
-  let moduleGroupName = 'Modules';
+  // Clean Role-Based Navigation Items (No clutter numbering or badges)
+  let navItems: { name: string; path: string; icon: any }[] = [];
+  let moduleGroupName = 'Navigation';
 
   if (role === 'EMPLOYEE') {
-    moduleGroupName = 'Marketing Employee (5 Modules)';
+    moduleGroupName = 'Employee Modules';
     navItems = [
-      { name: '1. User Dashboard', path: '/', icon: LayoutDashboard },
-      { name: '2. Lead Management', path: '/leads', icon: Target },
-      { name: '3. Task & Schedule', path: '/schedule', icon: CalendarClock },
-      { name: '4. Progress Module', path: '/progress', icon: TrendingUp },
-      { name: '5. Field Tracking', path: '/tracking', icon: MapPin },
+      { name: 'User Dashboard', path: '/', icon: LayoutDashboard },
+      { name: 'Lead Management', path: '/leads', icon: Target },
+      { name: 'Task & Schedule', path: '/schedule', icon: CalendarClock },
+      { name: 'Progress Module', path: '/progress', icon: TrendingUp },
+      { name: 'Field Tracking', path: '/tracking', icon: MapPin },
     ];
   } else if (role === 'ADMIN' || role === 'MANAGER') {
-    moduleGroupName = 'Marketing Head (3 Modules)';
+    moduleGroupName = 'Management Modules';
     navItems = [
-      { name: '1. The Dashboard', path: '/', icon: LayoutDashboard },
-      { name: '2. Clients Management', path: '/clients', icon: Building2 },
-      { name: '3. Team Management', path: '/team', icon: Users },
+      { name: 'The Dashboard', path: '/', icon: LayoutDashboard },
+      { name: 'Clients Management', path: '/clients', icon: Building2 },
+      { name: 'Team Management', path: '/team', icon: Users },
     ];
   } else if (role === 'CEO') {
-    moduleGroupName = 'Executive Command Center';
+    moduleGroupName = 'Executive View';
     navItems = [
-      { name: 'CEO Single-Page View', path: '/', icon: LayoutDashboard, badge: 'Read-Only' },
+      { name: 'Executive Command Center', path: '/', icon: LayoutDashboard },
     ];
   }
+
+  // Clean user display label
+  const userTitle =
+    user.designation ||
+    (role === 'CEO' ? 'Chief Executive Officer' : role === 'ADMIN' ? 'Head of Marketing' : 'Marketing Executive');
+  const userDept =
+    user.department ||
+    (role === 'CEO' ? 'Executive Leadership' : 'Sales & Marketing');
 
   return (
     <aside
@@ -89,32 +93,30 @@ export const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, setIsCollapsed })
           </div>
           <button
             onClick={() => setIsCollapsed(!isCollapsed)}
-            className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-50 transition-colors"
+            className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-50 transition-colors cursor-pointer"
             title={isCollapsed ? 'Expand Sidebar' : 'Collapse Sidebar'}
           >
             {isCollapsed ? <ChevronRight className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}
           </button>
         </div>
 
-        {/* Current Role Banner */}
+        {/* Current Active Role Badge */}
         {!isCollapsed && (
-          <div className="px-4 py-3 bg-slate-50 border-b border-slate-100">
-            <div className="flex items-center justify-between">
-              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
-                Current Persona
-              </span>
-              <span
-                className={`text-[9px] font-black px-2 py-0.5 rounded-full uppercase ${
-                  role === 'CEO'
-                    ? 'bg-amber-100 text-amber-800'
-                    : role === 'ADMIN' || role === 'MANAGER'
-                    ? 'bg-purple-100 text-purple-800'
-                    : 'bg-emerald-100 text-emerald-800'
-                }`}
-              >
-                {role === 'CEO' ? 'CEO' : role === 'ADMIN' ? 'Marketing Head' : 'Marketing Employee'}
-              </span>
-            </div>
+          <div className="px-4 py-2.5 bg-slate-50/80 border-b border-slate-100 flex items-center justify-between">
+            <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
+              Workspace Role
+            </span>
+            <span
+              className={`text-[10px] font-black px-2.5 py-0.5 rounded-full ${
+                role === 'CEO'
+                  ? 'bg-amber-100 text-amber-800'
+                  : role === 'ADMIN' || role === 'MANAGER'
+                  ? 'bg-purple-100 text-purple-800'
+                  : 'bg-emerald-100 text-emerald-800'
+              }`}
+            >
+              {role === 'CEO' ? 'CEO' : role === 'ADMIN' ? 'Marketing Head' : 'Marketing Employee'}
+            </span>
           </div>
         )}
 
@@ -135,10 +137,10 @@ export const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, setIsCollapsed })
                 <NavLink
                   key={item.path}
                   to={item.path}
-                  className={`flex items-center gap-3 px-3.5 py-3 rounded-2xl font-bold text-xs transition-all relative group ${
+                  className={`flex items-center gap-3 px-3.5 py-3 rounded-2xl font-bold text-xs transition-all duration-200 relative group ${
                     isActive
                       ? 'bg-gradient-to-r from-brand-600 to-indigo-600 text-white shadow-md shadow-brand-500/20'
-                      : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
+                      : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900 hover:translate-x-0.5'
                   } ${isCollapsed ? 'justify-center' : ''}`}
                   title={isCollapsed ? item.name : undefined}
                 >
@@ -148,59 +150,52 @@ export const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, setIsCollapsed })
                     }`}
                   />
                   {!isCollapsed && (
-                    <div className="flex items-center justify-between flex-1">
-                      <span>{item.name}</span>
-                      {item.badge && (
-                        <span className="text-[9px] px-1.5 py-0.5 rounded bg-white/20 text-white font-extrabold uppercase">
-                          {item.badge}
-                        </span>
-                      )}
-                    </div>
+                    <span className="truncate">{item.name}</span>
                   )}
                 </NavLink>
               );
             })}
           </div>
 
-          {/* Persona Quick Switcher for testing */}
+          {/* Persona Quick Switcher (Clean - No Personal Names) */}
           {!isCollapsed && (
             <div className="pt-4 border-t border-slate-100">
               <span className="px-3 text-[9px] font-bold text-slate-400 uppercase tracking-wider block mb-2">
-                Quick Role Preview
+                Switch Role Preview
               </span>
               <div className="space-y-1">
                 <button
-                  onClick={() => quickLogin('shivani@kalpracrm.com')}
-                  className={`w-full text-left px-3 py-1.5 rounded-xl text-[11px] font-bold flex items-center justify-between transition-colors ${
+                  type="button"
+                  onClick={() => quickLogin('employee@kalpracrm.com')}
+                  className={`w-full text-left px-3 py-2 rounded-xl text-[11px] font-bold flex items-center justify-between transition-all duration-200 cursor-pointer ${
                     role === 'EMPLOYEE'
-                      ? 'bg-emerald-50 text-emerald-800 border border-emerald-200'
-                      : 'text-slate-500 hover:bg-slate-50'
+                      ? 'bg-emerald-50 text-emerald-800 border border-emerald-200 shadow-xs'
+                      : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
                   }`}
                 >
                   <span>Marketing Employee</span>
-                  <span className="text-[9px] font-mono text-slate-400">Shivani</span>
                 </button>
                 <button
-                  onClick={() => quickLogin('admin.srija@kalpracrm.com')}
-                  className={`w-full text-left px-3 py-1.5 rounded-xl text-[11px] font-bold flex items-center justify-between transition-colors ${
+                  type="button"
+                  onClick={() => quickLogin('admin@kalpracrm.com')}
+                  className={`w-full text-left px-3 py-2 rounded-xl text-[11px] font-bold flex items-center justify-between transition-all duration-200 cursor-pointer ${
                     role === 'ADMIN' || role === 'MANAGER'
-                      ? 'bg-purple-50 text-purple-800 border border-purple-200'
-                      : 'text-slate-500 hover:bg-slate-50'
+                      ? 'bg-purple-50 text-purple-800 border border-purple-200 shadow-xs'
+                      : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
                   }`}
                 >
                   <span>Marketing Head</span>
-                  <span className="text-[9px] font-mono text-slate-400">Srija Mam</span>
                 </button>
                 <button
+                  type="button"
                   onClick={() => quickLogin('ceo@kalpracrm.com')}
-                  className={`w-full text-left px-3 py-1.5 rounded-xl text-[11px] font-bold flex items-center justify-between transition-colors ${
+                  className={`w-full text-left px-3 py-2 rounded-xl text-[11px] font-bold flex items-center justify-between transition-all duration-200 cursor-pointer ${
                     role === 'CEO'
-                      ? 'bg-amber-50 text-amber-800 border border-amber-200'
-                      : 'text-slate-500 hover:bg-slate-50'
+                      ? 'bg-amber-50 text-amber-800 border border-amber-200 shadow-xs'
+                      : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
                   }`}
                 >
                   <span>CEO (Executive)</span>
-                  <span className="text-[9px] font-mono text-slate-400">Rajesh Varma</span>
                 </button>
               </div>
             </div>
@@ -208,7 +203,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, setIsCollapsed })
         </div>
       </div>
 
-      {/* User profile & Logout Footer */}
+      {/* User Profile & Logout Footer (Cleaned Up - No Unwanted Names) */}
       <div className="p-3 border-t border-slate-100 bg-slate-50/70">
         <div className={`flex items-center gap-3 ${isCollapsed ? 'justify-center' : 'justify-between'}`}>
           <div className="flex items-center gap-2.5 overflow-hidden">
@@ -217,16 +212,16 @@ export const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, setIsCollapsed })
                 user.avatar ||
                 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80'
               }
-              alt={user.name}
+              alt={userTitle}
               className="w-9 h-9 rounded-xl object-cover border border-slate-200 shrink-0"
             />
             {!isCollapsed && (
               <div className="flex flex-col min-w-0">
                 <span className="text-xs font-bold text-slate-900 truncate leading-tight">
-                  {user.name}
+                  {userTitle}
                 </span>
                 <span className="text-[10px] text-slate-500 truncate mt-0.5">
-                  {role === 'CEO' ? 'Chief Executive' : role === 'ADMIN' ? 'Head of Marketing' : 'Sales & Marketing'}
+                  {userDept}
                 </span>
               </div>
             )}
@@ -234,7 +229,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, setIsCollapsed })
           {!isCollapsed && (
             <button
               onClick={logout}
-              className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors"
+              className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors cursor-pointer"
               title="Logout"
             >
               <LogOut className="w-4 h-4" />

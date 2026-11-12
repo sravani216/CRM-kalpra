@@ -112,29 +112,24 @@ export const ProgressModule: React.FC = () => {
 
   return (
     <div className="space-y-6">
-      {/* Top Banner */}
-      <div className="bg-gradient-to-r from-emerald-600 via-teal-600 to-indigo-700 p-6 sm:p-7 rounded-3xl text-white shadow-lg shadow-teal-500/15">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <div>
-            <span className="text-xs font-extrabold uppercase tracking-widest text-emerald-200">
-              Module 4 • Kalpra Tech CRM
-            </span>
-            <h1 className="text-2xl sm:text-3xl font-black tracking-tight mt-1">
-              Progress & Growth Module
-            </h1>
-            <p className="text-xs sm:text-sm text-emerald-100 mt-1 max-w-xl">
-              Real-time graphs and performance indicators: Closed deals, total revenue generated, submitted work reports, and client meetings conducted.
-            </p>
-          </div>
+      {/* Sleek Page Header (Clean & Modern) */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2 border-b border-slate-100">
+        <div>
+          <h1 className="text-2xl font-black text-slate-900 tracking-tight">
+            Progress & Performance
+          </h1>
+          <p className="text-xs sm:text-sm text-slate-500 mt-0.5">
+            Real-time analytics and performance indicators: Closed deals, revenue generated, work reports, and meetings conducted.
+          </p>
+        </div>
 
-          <div className="flex items-center gap-2 self-start sm:self-center bg-white/10 backdrop-blur-md px-4 py-2.5 rounded-2xl border border-white/20">
-            <Flame className="w-5 h-5 text-amber-300 animate-pulse" />
-            <div>
-              <span className="text-[10px] text-emerald-100 font-bold uppercase block leading-none">
-                Performance Rating
-              </span>
-              <span className="text-sm font-black text-white">Top 5% Performer</span>
-            </div>
+        <div className="flex items-center gap-2 self-start sm:self-center bg-amber-50 px-3.5 py-2 rounded-xl border border-amber-200">
+          <Flame className="w-4 h-4 text-amber-500 animate-pulse" />
+          <div>
+            <span className="text-[10px] text-amber-800 font-bold uppercase block leading-none">
+              Performance Rating
+            </span>
+            <span className="text-xs font-black text-amber-900">Top Performer</span>
           </div>
         </div>
       </div>

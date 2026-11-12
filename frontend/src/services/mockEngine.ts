@@ -15,7 +15,7 @@ import {
   MockUser,
 } from './mockData';
 
-const STORAGE_KEY_PREFIX = 'kalpra_crm_demo_';
+const STORAGE_KEY_PREFIX = 'kalpra_crm_v2_';
 
 function getStored<T>(key: string, defaultValue: T): T {
   try {
@@ -68,10 +68,13 @@ class MockDatabase {
     const saved = localStorage.getItem('kalpra_crm_user');
     if (saved) {
       try {
-        return JSON.parse(saved);
+        const parsed = JSON.parse(saved);
+        const liveUser = this.users.find((u) => u.id === parsed.id || u.role === parsed.role);
+        if (liveUser) return liveUser;
+        return parsed;
       } catch (e) {}
     }
-    return this.users[0]; // Default to CEO Rajesh Varma
+    return this.users.find((u) => u.role === 'EMPLOYEE') || this.users[0];
   }
 }
 
@@ -92,8 +95,18 @@ export async function handleMockRequest(
 
   // 1. AUTH
   if (cleanEndpoint === '/auth/login' && method === 'POST') {
-    const { email } = data || {};
-    const user = mockDb.users.find((u) => u.email.toLowerCase() === (email || '').toLowerCase()) || mockDb.users[0];
+    const rawEmail = (data?.email || '').toLowerCase().trim();
+    let user = mockDb.users.find((u) => u.email.toLowerCase() === rawEmail);
+    if (!user) {
+      if (rawEmail.includes('admin') || rawEmail.includes('head') || rawEmail.includes('srija')) {
+        user = mockDb.users.find((u) => u.role === 'ADMIN');
+      } else if (rawEmail.includes('ceo') || rawEmail.includes('rajesh')) {
+        user = mockDb.users.find((u) => u.role === 'CEO');
+      } else {
+        user = mockDb.users.find((u) => u.role === 'EMPLOYEE');
+      }
+    }
+    user = user || mockDb.users[0];
     return {
       success: true,
       token: 'demo-jwt-token-' + user.id,
@@ -111,6 +124,16 @@ export async function handleMockRequest(
 
   if (cleanEndpoint === '/auth/logout') {
     return { success: true, message: 'Logged out successfully' };
+  }
+
+  // TEAM MEMBERS / EMPLOYEES
+  if ((cleanEndpoint === '/auth/team' || cleanEndpoint === '/team' || cleanEndpoint === '/users') && method === 'GET') {
+    // Return all marketing employees and team members
+    const members = mockDb.users.filter((u) => u.role === 'EMPLOYEE' || u.role === 'MANAGER');
+    return {
+      success: true,
+      data: members.length > 0 ? members : mockDb.users.filter((u) => u.role !== 'CEO'),
+    };
   }
 
   // 2. DASHBOARD
@@ -138,7 +161,7 @@ export async function handleMockRequest(
 
     const employeePerformance = [
       {
-        name: 'Shivani Reddy',
+        name: 'Marketing Executive',
         leads: mockDb.leads.filter((l) => l.assignedToId === 'usr-shivani').length,
         won: mockDb.leads.filter((l) => l.assignedToId === 'usr-shivani' && l.status === 'WON').length,
         revenue: mockDb.leads
@@ -147,13 +170,22 @@ export async function handleMockRequest(
         tasksCompleted: mockDb.tasks.filter((t) => t.assignedToId === 'usr-shivani' && t.status === 'COMPLETED').length,
       },
       {
-        name: 'Uday Kiran',
+        name: 'Field Sales Specialist',
         leads: mockDb.leads.filter((l) => l.assignedToId === 'usr-uday').length,
         won: mockDb.leads.filter((l) => l.assignedToId === 'usr-uday' && l.status === 'WON').length,
         revenue: mockDb.leads
           .filter((l) => l.assignedToId === 'usr-uday' && l.status === 'WON')
           .reduce((sum, l) => sum + (Number(l.dealValue) || 0), 0),
         tasksCompleted: mockDb.tasks.filter((t) => t.assignedToId === 'usr-uday' && t.status === 'COMPLETED').length,
+      },
+      {
+        name: 'Client Acquisition Associate',
+        leads: mockDb.leads.filter((l) => l.assignedToId === 'usr-emp3').length,
+        won: mockDb.leads.filter((l) => l.assignedToId === 'usr-emp3' && l.status === 'WON').length,
+        revenue: mockDb.leads
+          .filter((l) => l.assignedToId === 'usr-emp3' && l.status === 'WON')
+          .reduce((sum, l) => sum + (Number(l.dealValue) || 0), 0),
+        tasksCompleted: mockDb.tasks.filter((t) => t.assignedToId === 'usr-emp3' && t.status === 'COMPLETED').length,
       },
     ];
 
@@ -169,33 +201,33 @@ export async function handleMockRequest(
       {
         id: 'act-1',
         title: 'Deal Won: Apex Logistics',
-        description: 'Shivani closed Rs. 7,50,000 contract with Apex Global Logistics.',
+        description: 'Marketing Executive closed Rs. 7,50,000 contract with Apex Global Logistics.',
         time: '2 hours ago',
-        user: 'Shivani Reddy',
+        user: 'Marketing Executive',
         badge: 'WON',
       },
       {
         id: 'act-2',
         title: 'Task Evidence Submitted',
-        description: 'Shivani submitted compliance proposal documentation for review.',
+        description: 'Marketing Executive submitted compliance proposal documentation for review.',
         time: '5 hours ago',
-        user: 'Shivani Reddy',
+        user: 'Marketing Executive',
         badge: 'REVIEW',
       },
       {
         id: 'act-3',
         title: 'Field Visit Verified',
-        description: 'Uday checked in at Zenith Healthtech Campus, Indiranagar.',
+        description: 'Field Sales Specialist checked in at Zenith Healthtech Campus, Indiranagar.',
         time: '1 day ago',
-        user: 'Uday Kiran',
+        user: 'Field Sales Specialist',
         badge: 'CHECKIN',
       },
       {
         id: 'act-4',
         title: 'Client Registered',
-        description: 'Srija registered GreenAgro Agrochem.',
+        description: 'Marketing Head registered GreenAgro Agrochem.',
         time: '2 days ago',
-        user: 'Srija Mam',
+        user: 'Marketing Head',
         badge: 'CLIENT',
       },
     ];
@@ -276,8 +308,9 @@ export async function handleMockRequest(
         { status: 'LOST', count: lostLeads },
       ],
       employeeWiseLeads: [
-        { name: 'Shivani Reddy', count: mockDb.leads.filter((l) => l.assignedToId === 'usr-shivani').length },
-        { name: 'Uday Kiran', count: mockDb.leads.filter((l) => l.assignedToId === 'usr-uday').length },
+        { name: 'Marketing Executive', count: mockDb.leads.filter((l) => l.assignedToId === 'usr-shivani').length },
+        { name: 'Field Sales Specialist', count: mockDb.leads.filter((l) => l.assignedToId === 'usr-uday').length },
+        { name: 'Client Acquisition Associate', count: mockDb.leads.filter((l) => l.assignedToId === 'usr-emp3').length },
       ],
       recentClients: mockDb.clients.slice(0, 5),
       leadProgression: [
@@ -750,7 +783,7 @@ export async function handleMockRequest(
           .reduce((sum, l) => sum + (Number(l.dealValue) || 0), 0),
         employeeComparison: [
           {
-            name: 'Shivani Reddy',
+            name: 'Marketing Executive',
             contacted: 8,
             completedTasks: 5,
             wonDeals: 1,
@@ -758,11 +791,19 @@ export async function handleMockRequest(
             conversionRate: 25,
           },
           {
-            name: 'Uday Kiran',
+            name: 'Field Sales Specialist',
             contacted: 6,
             completedTasks: 4,
             wonDeals: 1,
             revenue: 520000,
+            conversionRate: 20,
+          },
+          {
+            name: 'Client Acquisition Associate',
+            contacted: 5,
+            completedTasks: 4,
+            wonDeals: 1,
+            revenue: 350000,
             conversionRate: 20,
           },
         ],
@@ -796,7 +837,7 @@ export async function handleMockRequest(
     } else if (reportType === 'productivity') {
       records = [
         {
-          employee: 'Shivani Reddy',
+          employee: 'Marketing Executive',
           assignedLeads: 5,
           contacted: 4,
           wonDeals: 1,
@@ -805,13 +846,22 @@ export async function handleMockRequest(
           revenueGenerated: 'Rs. 7,50,000',
         },
         {
-          employee: 'Uday Kiran',
+          employee: 'Field Sales Specialist',
           assignedLeads: 4,
           contacted: 3,
           wonDeals: 1,
           tasksCompleted: 3,
           followupsDone: 2,
           revenueGenerated: 'Rs. 5,20,000',
+        },
+        {
+          employee: 'Client Acquisition Associate',
+          assignedLeads: 4,
+          contacted: 3,
+          wonDeals: 1,
+          tasksCompleted: 3,
+          followupsDone: 2,
+          revenueGenerated: 'Rs. 3,50,000',
         },
       ];
     } else if (reportType === 'daily') {

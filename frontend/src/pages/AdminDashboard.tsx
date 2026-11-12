@@ -59,36 +59,24 @@ export const AdminDashboard: React.FC = () => {
 
   return (
     <div className="space-y-6">
-      {/* Top Marketing Head Header */}
-      <div className="bg-gradient-to-r from-purple-700 via-indigo-700 to-brand-700 p-6 sm:p-7 rounded-3xl text-white shadow-xl shadow-purple-600/15">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <div>
-            <div className="flex items-center gap-2">
-              <span className="text-xs font-extrabold uppercase tracking-widest text-purple-200">
-                Marketing Head • Admin Portal
-              </span>
-              <span className="px-2.5 py-0.5 rounded-full text-[10px] font-black bg-purple-500/40 border border-purple-300/30 text-white">
-                Leadership View
-              </span>
-            </div>
-            <h1 className="text-2xl sm:text-3xl font-black tracking-tight mt-1">
-              Marketing Head Dashboard
-            </h1>
-            <p className="text-xs sm:text-sm text-purple-100 mt-1 max-w-xl">
-              Welcome, <span className="font-bold text-white">{user?.name || 'Srija Mam'}</span>. Track generated revenue, deals closed, team tasks for today, strategic key notes, and calendar reminders.
-            </p>
-          </div>
+      {/* Sleek Page Header (Clean & Modern) */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2 border-b border-slate-100">
+        <div>
+          <h1 className="text-2xl font-black text-slate-900 tracking-tight">
+            Marketing Head Dashboard
+          </h1>
+          <p className="text-xs sm:text-sm text-slate-500 mt-0.5">
+            Track generated revenue, deals closed, team tasks for today, strategic key notes, and calendar reminders.
+          </p>
+        </div>
 
-          <div className="flex items-center gap-3">
-            <div className="p-3 bg-white/10 backdrop-blur-md rounded-2xl border border-white/20 text-right">
-              <span className="text-[10px] uppercase font-bold text-purple-200 block">
-                Total Closed Budget
-              </span>
-              <span className="text-xl font-black text-white">
-                ₹ {totalRevenue.toLocaleString('en-IN')}
-              </span>
-            </div>
-          </div>
+        <div className="p-3 bg-purple-50 rounded-2xl border border-purple-100 text-right">
+          <span className="text-[10px] uppercase font-bold text-purple-700 block">
+            Total Closed Budget
+          </span>
+          <span className="text-xl font-black text-purple-900">
+            ₹ {totalRevenue.toLocaleString('en-IN')}
+          </span>
         </div>
       </div>
 

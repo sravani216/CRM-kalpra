@@ -53,35 +53,15 @@ export const UserDashboard: React.FC = () => {
 
   return (
     <div className="space-y-6">
-      {/* Top Banner */}
-      <div className="bg-gradient-to-r from-brand-600 via-indigo-600 to-purple-600 p-6 sm:p-7 rounded-3xl text-white shadow-lg shadow-brand-500/15">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <div>
-            <div className="flex items-center gap-2">
-              <span className="text-xs font-extrabold uppercase tracking-widest text-brand-200">
-                Marketing Employee • User Portal
-              </span>
-              <span className="px-2.5 py-0.5 rounded-full text-[10px] font-black bg-brand-500/40 border border-brand-300/30 text-white">
-                Module 1
-              </span>
-            </div>
-            <h1 className="text-2xl sm:text-3xl font-black tracking-tight mt-1">
-              Employee Workspace Dashboard
-            </h1>
-            <p className="text-xs sm:text-sm text-brand-100 mt-1 max-w-xl">
-              Welcome back, <span className="font-bold text-white">{user?.name || 'Shivani Reddy'}</span>. Manage your Google-style calendar reminders, today's work items, and private thoughts dump space.
-            </p>
-          </div>
-
-          <div className="flex items-center gap-3">
-            <Link
-              to="/schedule?tab=meetings"
-              className="btn-smooth flex items-center gap-1.5 px-4 py-2.5 rounded-2xl bg-white text-brand-600 hover:text-brand-700 font-extrabold text-xs shadow-md"
-            >
-              <span>Go to Task & Schedule</span>
-              <ArrowRight className="w-3.5 h-3.5" />
-            </Link>
-          </div>
+      {/* Sleek Page Header (Clean & Modern) */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-2 border-b border-slate-100">
+        <div>
+          <h1 className="text-2xl font-black text-slate-900 tracking-tight">
+            Workspace Dashboard
+          </h1>
+          <p className="text-xs sm:text-sm text-slate-500 mt-0.5">
+            Plan schedule reminders, track today's action items, and organize personal workflow notes.
+          </p>
         </div>
       </div>
 

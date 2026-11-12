@@ -247,11 +247,8 @@ export const GoogleCalendar: React.FC<GoogleCalendarProps> = ({
             <CalendarIcon className="w-6 h-6" />
           </div>
           <div>
-            <h2 className="text-xl font-bold text-slate-900 flex items-center gap-2">
+            <h2 className="text-xl font-bold text-slate-900">
               {title}
-              <span className="text-xs px-2.5 py-0.5 rounded-full font-semibold bg-brand-50 text-brand-600 border border-brand-200/60">
-                Google Sync Style
-              </span>
             </h2>
             <p className="text-xs text-slate-500 mt-0.5">
               Click any calendar day to schedule tasks, set client reminders, and monitor deadlines.

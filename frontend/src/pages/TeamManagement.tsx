@@ -40,6 +40,7 @@ export const TeamManagement: React.FC = () => {
 
   // Tabs: 'team' | 'photos' | 'tracking'
   const [activeTab, setActiveTab] = useState<'team' | 'photos' | 'tracking'>('team');
+  const [teamSearch, setTeamSearch] = useState('');
 
   // Modals
   const [isAddMemberModalOpen, setIsAddMemberModalOpen] = useState(false);
@@ -190,68 +191,92 @@ export const TeamManagement: React.FC = () => {
 
   return (
     <div className="space-y-6">
-      {/* Top Banner */}
-      <div className="bg-gradient-to-r from-purple-700 via-indigo-700 to-brand-600 p-6 sm:p-7 rounded-3xl text-white shadow-xl shadow-purple-600/15">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <div>
-            <span className="text-xs font-extrabold uppercase tracking-widest text-purple-200">
-              Admin Module 3 • Kalpra Tech CRM
-            </span>
-            <h1 className="text-2xl sm:text-3xl font-black tracking-tight mt-1">
-              Team Management & Monitoring
-            </h1>
-            <p className="text-xs sm:text-sm text-purple-100 mt-1 max-w-xl">
-              Add new team members, inspect employee tasks, mirror user dashboards in read-only mode, assign new leads, audit meeting photos, and track live GPS field locations.
-            </p>
-          </div>
+      {/* Sleek Page Header (Clean & Modern) */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2 border-b border-slate-100">
+        <div>
+          <h1 className="text-2xl font-black text-slate-900 tracking-tight">
+            Team Management & Monitoring
+          </h1>
+          <p className="text-xs sm:text-sm text-slate-500 mt-0.5">
+            Add team members, monitor user tasks, mirror employee dashboards in read-only mode, and track field locations.
+          </p>
+        </div>
 
-          <div className="flex items-center gap-2 self-start sm:self-center flex-wrap">
-            <button
-              onClick={() => setActiveTab('team')}
-              className={`px-4 py-2.5 rounded-2xl text-xs font-black transition-all ${
-                activeTab === 'team'
-                  ? 'bg-white text-purple-700 shadow-md'
-                  : 'bg-white/10 text-white hover:bg-white/20'
-              }`}
-            >
-              Team Members ({teamMembers.length})
-            </button>
-            <button
-              onClick={() => setActiveTab('photos')}
-              className={`px-4 py-2.5 rounded-2xl text-xs font-black transition-all ${
-                activeTab === 'photos'
-                  ? 'bg-white text-purple-700 shadow-md'
-                  : 'bg-white/10 text-white hover:bg-white/20'
-              }`}
-            >
-              Photo Monitoring ({photos.length})
-            </button>
-            <button
-              onClick={() => setActiveTab('tracking')}
-              className={`px-4 py-2.5 rounded-2xl text-xs font-black transition-all ${
-                activeTab === 'tracking'
-                  ? 'bg-white text-purple-700 shadow-md'
-                  : 'bg-white/10 text-white hover:bg-white/20'
-              }`}
-            >
-              Live Location ({locations.length})
-            </button>
-            <button
-              onClick={() => setIsAddMemberModalOpen(true)}
-              className="btn-smooth flex items-center gap-1.5 px-4 py-2.5 rounded-2xl bg-emerald-500 hover:bg-emerald-600 text-white font-extrabold text-xs shadow-md shadow-emerald-500/30"
-            >
-              <UserPlus className="w-4 h-4" />
-              <span>+ Add Team Member</span>
-            </button>
-          </div>
+        <div className="flex items-center gap-2 self-start sm:self-center flex-wrap">
+          <button
+            onClick={() => setActiveTab('team')}
+            className={`px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+              activeTab === 'team'
+                ? 'bg-purple-600 text-white shadow-sm'
+                : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+            }`}
+          >
+            Team Members ({teamMembers.length})
+          </button>
+          <button
+            onClick={() => setActiveTab('photos')}
+            className={`px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+              activeTab === 'photos'
+                ? 'bg-purple-600 text-white shadow-sm'
+                : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+            }`}
+          >
+            Photo Monitoring ({photos.length})
+          </button>
+          <button
+            onClick={() => setActiveTab('tracking')}
+            className={`px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+              activeTab === 'tracking'
+                ? 'bg-purple-600 text-white shadow-sm'
+                : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+            }`}
+          >
+            Live Location ({locations.length})
+          </button>
+          <button
+            onClick={() => setIsAddMemberModalOpen(true)}
+            className="btn-smooth flex items-center gap-1.5 px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-sm cursor-pointer"
+          >
+            <UserPlus className="w-4 h-4" />
+            <span>+ Add Team Member</span>
+          </button>
         </div>
       </div>
 
       {/* TAB 1: TEAM MEMBERS LIST WITH TASKS & READ-ONLY DASHBOARD VIEW */}
       {activeTab === 'team' && (
         <div className="space-y-4">
+          {/* Quick Search & Filter Bar */}
+          <div className="flex items-center justify-between gap-4 p-4 rounded-2xl bg-white border border-slate-100 shadow-xs">
+            <div className="relative flex-1 max-w-md">
+              <input
+                type="text"
+                value={teamSearch}
+                onChange={(e) => setTeamSearch(e.target.value)}
+                placeholder="Search team members by name, role, area..."
+                className="w-full pl-9 pr-4 py-2 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:outline-none focus:ring-2 focus:ring-purple-500 transition-all"
+              />
+              <Users className="w-4 h-4 text-slate-400 absolute left-3 top-2.5" />
+            </div>
+            <span className="text-xs font-bold text-slate-500">
+              Showing {teamMembers.filter((m) =>
+                (m.name || '').toLowerCase().includes(teamSearch.toLowerCase()) ||
+                (m.designation || '').toLowerCase().includes(teamSearch.toLowerCase()) ||
+                (m.area || '').toLowerCase().includes(teamSearch.toLowerCase()) ||
+                (m.email || '').toLowerCase().includes(teamSearch.toLowerCase())
+              ).length} Team Members
+            </span>
+          </div>
+
           <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-            {teamMembers.map((member) => {
+            {teamMembers
+              .filter((m) =>
+                (m.name || '').toLowerCase().includes(teamSearch.toLowerCase()) ||
+                (m.designation || '').toLowerCase().includes(teamSearch.toLowerCase()) ||
+                (m.area || '').toLowerCase().includes(teamSearch.toLowerCase()) ||
+                (m.email || '').toLowerCase().includes(teamSearch.toLowerCase())
+              )
+              .map((member) => {
               const memberTasks = tasks.filter((t) => t.assignedToId === member.id);
               const completedTasks = memberTasks.filter((t) => t.status === 'COMPLETED').length;
               const memberLeads = leads.filter((l) => l.assignedToId === member.id);

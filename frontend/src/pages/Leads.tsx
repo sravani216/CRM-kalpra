@@ -197,25 +197,22 @@ export const Leads: React.FC = () => {
 
   return (
     <div className="space-y-6">
-      {/* Top Banner / Heading */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-gradient-to-r from-brand-600 via-indigo-600 to-purple-600 p-6 rounded-3xl text-white shadow-lg shadow-brand-500/15">
+      {/* Sleek Page Header (Clean & Modern) */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2 border-b border-slate-100">
         <div>
-          <span className="text-xs font-extrabold uppercase tracking-widest text-brand-200">
-            Module 2 • Kalpra Tech CRM
-          </span>
-          <h1 className="text-2xl sm:text-3xl font-black tracking-tight mt-1">
+          <h1 className="text-2xl font-black text-slate-900 tracking-tight">
             Lead Management
           </h1>
-          <p className="text-xs sm:text-sm text-brand-100 mt-1 max-w-xl">
-            Track prospective client contacts, write real-time lead notes, filter by territory area, and register new client opportunities.
+          <p className="text-xs sm:text-sm text-slate-500 mt-0.5">
+            Track prospective client contacts, write real-time notes, filter by territory area, and register new leads.
           </p>
         </div>
 
         <button
           onClick={() => setIsNewLeadModalOpen(true)}
-          className="btn-smooth flex items-center justify-center gap-2 px-5 py-3 rounded-2xl bg-white text-brand-600 hover:text-brand-700 font-extrabold text-xs shadow-md transition-all self-start sm:self-center"
+          className="btn-smooth flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-brand-600 hover:bg-brand-700 text-white font-bold text-xs shadow-sm transition-all self-start sm:self-center cursor-pointer"
         >
-          <Plus className="w-4 h-4 stroke-[3]" />
+          <Plus className="w-4 h-4" />
           <span>+ Register New Lead</span>
         </button>
       </div>

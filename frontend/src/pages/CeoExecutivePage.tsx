@@ -91,7 +91,7 @@ export const CeoExecutivePage: React.FC = () => {
       // Team comparison matrix
       const comp = [
         {
-          name: 'Shivani Reddy',
+          name: 'Marketing Executive',
           designation: 'Marketing & Sales Executive',
           avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80',
           area: 'Hitec City, Hyderabad',
@@ -102,7 +102,7 @@ export const CeoExecutivePage: React.FC = () => {
           status: 'Active on Field',
         },
         {
-          name: 'Uday Kiran',
+          name: 'Field Sales Specialist',
           designation: 'Senior Sales Specialist',
           avatar: 'https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=150&auto=format&fit=crop&q=80',
           area: 'Jubilee Hills, Hyderabad',
@@ -110,6 +110,17 @@ export const CeoExecutivePage: React.FC = () => {
           revenueGenerated: 1200000,
           meetings: 26,
           reports: 14,
+          status: 'Active on Field',
+        },
+        {
+          name: 'Client Acquisition Associate',
+          designation: 'Outreach & Lead Specialist',
+          avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150&auto=format&fit=crop&q=80',
+          area: 'Madhapur, Hyderabad',
+          dealsWon: 1,
+          revenueGenerated: 750000,
+          meetings: 20,
+          reports: 10,
           status: 'Active on Field',
         },
       ];
@@ -140,36 +151,29 @@ export const CeoExecutivePage: React.FC = () => {
   return (
     <div className="space-y-6">
       {/* CEO Executive Command Header */}
-      <div className="bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 p-7 sm:p-8 rounded-3xl text-white shadow-2xl border border-slate-800">
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-          <div>
-            <div className="flex items-center gap-2">
-              <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-ping" />
-              <span className="text-xs font-mono font-bold tracking-widest uppercase text-emerald-400">
-                Kalpra Tech Executive Command Center
-              </span>
-              <span className="flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-black bg-amber-400/20 text-amber-300 border border-amber-400/30">
-                <Lock className="w-3 h-3" /> Read-Only Executive Oversight
-              </span>
-            </div>
-            <h1 className="text-2xl sm:text-4xl font-black tracking-tight mt-2 text-white">
-              Chief Executive Officer Portal
-            </h1>
-            <p className="text-xs sm:text-sm text-slate-300 mt-1 max-w-2xl leading-relaxed">
-              Unified single-page intelligence overview. Real-time updates on revenue incurred, client accounts brought, closed budgets, lead pipeline, employee productivity, and live GPS field tracking.
-            </p>
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2 border-b border-slate-100">
+        <div>
+          <div className="flex items-center gap-2">
+            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+            <span className="text-[11px] font-bold tracking-wider uppercase text-slate-400">
+              Executive Telemetry
+            </span>
           </div>
+          <h1 className="text-2xl font-black text-slate-900 tracking-tight mt-0.5">
+            Executive Command Center
+          </h1>
+          <p className="text-xs sm:text-sm text-slate-500 mt-0.5">
+            Real-time updates on revenue incurred, client accounts brought, closed budgets, lead pipeline, and field operations.
+          </p>
+        </div>
 
-          <div className="flex items-center gap-3 self-start md:self-center">
-            <div className="p-4 bg-white/5 backdrop-blur-md rounded-2xl border border-white/10 text-right">
-              <span className="text-[10px] uppercase font-bold text-slate-400 block">
-                Total Enterprise Value
-              </span>
-              <span className="text-2xl font-black text-emerald-400">
-                ₹ {revenue.toLocaleString('en-IN')}
-              </span>
-            </div>
-          </div>
+        <div className="p-3 bg-emerald-50 rounded-2xl border border-emerald-100 text-right">
+          <span className="text-[10px] uppercase font-bold text-emerald-700 block">
+            Total Enterprise Revenue
+          </span>
+          <span className="text-xl font-black text-emerald-900">
+            ₹ {revenue.toLocaleString('en-IN')}
+          </span>
         </div>
       </div>
 

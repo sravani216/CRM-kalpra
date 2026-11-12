@@ -280,17 +280,16 @@ export const TaskAndSchedule: React.FC = () => {
 
   return (
     <div className="space-y-6">
-      {/* Top Header */}
-      <div className="bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 p-6 sm:p-7 rounded-3xl text-white shadow-lg shadow-indigo-500/15">
-        <span className="text-xs font-extrabold uppercase tracking-widest text-indigo-200">
-          Module 3 • Kalpra Tech CRM
-        </span>
-        <h1 className="text-2xl sm:text-3xl font-black tracking-tight mt-1">
-          Task and Schedule
-        </h1>
-        <p className="text-xs sm:text-sm text-indigo-100 mt-1 max-w-xl">
-          Coordinate client meetings with live start/stop timers & photo proof, log customer follow-up statuses, and upload work status reports reflecting on Admin and CEO Dashboards.
-        </p>
+      {/* Sleek Page Header (Clean & Modern) */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2 border-b border-slate-100">
+        <div>
+          <h1 className="text-2xl font-black text-slate-900 tracking-tight">
+            Task and Schedule
+          </h1>
+          <p className="text-xs sm:text-sm text-slate-500 mt-0.5">
+            Coordinate client meetings with live timers & photo proof, log customer follow-ups, and submit work reports.
+          </p>
+        </div>
       </div>
 
       {/* THE 3 PROMINENT BOXES: CLIENT MEETINGS | FOLLOW UPS | REPORTS */}

@@ -101,43 +101,38 @@ export const ClientsManagement: React.FC = () => {
 
   return (
     <div className="space-y-6">
-      {/* Top Banner */}
-      <div className="bg-gradient-to-r from-purple-700 via-indigo-700 to-brand-600 p-6 sm:p-7 rounded-3xl text-white shadow-xl shadow-purple-600/15">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <div>
-            <span className="text-xs font-extrabold uppercase tracking-widest text-purple-200">
-              Admin Module 2 • Kalpra Tech CRM
-            </span>
-            <h1 className="text-2xl sm:text-3xl font-black tracking-tight mt-1">
-              Clients Management & Deal Closing
-            </h1>
-            <p className="text-xs sm:text-sm text-purple-100 mt-1 max-w-xl">
-              Manage client accounts, review contact designations & territories, and authorize deal closing with verified budgets to generate official Deal Closing Reports.
-            </p>
-          </div>
+      {/* Sleek Page Header (Clean & Modern) */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2 border-b border-slate-100">
+        <div>
+          <h1 className="text-2xl font-black text-slate-900 tracking-tight">
+            Clients Management & Deal Closing
+          </h1>
+          <p className="text-xs sm:text-sm text-slate-500 mt-0.5">
+            Manage enterprise accounts, audit designation & territory details, and close deals with official reports.
+          </p>
+        </div>
 
-          <div className="flex items-center gap-2 self-start sm:self-center">
-            <button
-              onClick={() => setActiveTab('clients')}
-              className={`px-4 py-2.5 rounded-2xl text-xs font-black transition-all ${
-                activeTab === 'clients'
-                  ? 'bg-white text-purple-700 shadow-md'
-                  : 'bg-white/10 text-white hover:bg-white/20'
-              }`}
-            >
-              Client Directory ({clients.length})
-            </button>
-            <button
-              onClick={() => setActiveTab('closingReports')}
-              className={`px-4 py-2.5 rounded-2xl text-xs font-black transition-all ${
-                activeTab === 'closingReports'
-                  ? 'bg-white text-purple-700 shadow-md'
-                  : 'bg-white/10 text-white hover:bg-white/20'
-              }`}
-            >
-              Deal Reports ({dealReports.length})
-            </button>
-          </div>
+        <div className="flex items-center gap-2 self-start sm:self-center">
+          <button
+            onClick={() => setActiveTab('clients')}
+            className={`px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+              activeTab === 'clients'
+                ? 'bg-purple-600 text-white shadow-sm'
+                : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+            }`}
+          >
+            Client Directory ({clients.length})
+          </button>
+          <button
+            onClick={() => setActiveTab('closingReports')}
+            className={`px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+              activeTab === 'closingReports'
+                ? 'bg-purple-600 text-white shadow-sm'
+                : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+            }`}
+          >
+            Deal Reports ({dealReports.length})
+          </button>
         </div>
       </div>
 

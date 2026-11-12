@@ -54,13 +54,13 @@ export const Topbar: React.FC<TopbarProps> = ({ isCollapsed }) => {
   const getPageInfo = () => {
     const path = location.pathname;
     if (path === '/') {
-      if (user?.role === 'CEO') return { title: 'CEO Executive Command Center', crumb: 'Executive Portal' };
+      if (user?.role === 'CEO') return { title: 'Executive Command Center', crumb: 'Executive' };
       if (user?.role === 'ADMIN' || user?.role === 'MANAGER') return { title: 'Marketing Head Dashboard', crumb: 'Admin' };
       return { title: 'Employee Workspace Dashboard', crumb: 'Employee' };
     }
-    if (path.startsWith('/leads')) return { title: 'Lead Management (Module 2)', crumb: 'Leads' };
-    if (path.startsWith('/schedule')) return { title: 'Task & Schedule (Module 3)', crumb: 'Schedule' };
-    if (path.startsWith('/progress')) return { title: 'Progress & Growth Module (Module 4)', crumb: 'Progress' };
+    if (path.startsWith('/leads')) return { title: 'Lead Management', crumb: 'Leads' };
+    if (path.startsWith('/schedule')) return { title: 'Task & Schedule', crumb: 'Schedule' };
+    if (path.startsWith('/progress')) return { title: 'Progress & Performance', crumb: 'Progress' };
     if (path.startsWith('/clients')) return { title: 'Clients Management & Deal Reports', crumb: 'Clients' };
     if (path.startsWith('/team')) return { title: 'Team Management & Monitoring', crumb: 'Team' };
     if (path.startsWith('/tracking')) return { title: 'Live GPS Field Tracking', crumb: 'Tracking' };
@@ -85,10 +85,9 @@ export const Topbar: React.FC<TopbarProps> = ({ isCollapsed }) => {
   };
 
   const demoAccounts = [
-    { name: 'Shivani Reddy', role: 'EMPLOYEE', email: 'shivani@kalpracrm.com', desc: 'Marketing Employee (5 Modules)' },
-    { name: 'Srija Mam', role: 'ADMIN', email: 'admin.srija@kalpracrm.com', desc: 'Marketing Head (3 Modules)' },
-    { name: 'Rajesh Varma', role: 'CEO', email: 'ceo@kalpracrm.com', desc: 'CEO Single-Page Read-Only' },
-    { name: 'Uday Kiran', role: 'EMPLOYEE', email: 'uday@kalpracrm.com', desc: 'Sales Specialist' },
+    { name: 'Marketing Employee', role: 'EMPLOYEE', email: 'employee@kalpracrm.com', desc: 'Tasks, calendar, meetings & reports' },
+    { name: 'Marketing Head', role: 'ADMIN', email: 'admin@kalpracrm.com', desc: 'Team management & deal closing reports' },
+    { name: 'Chief Executive Officer', role: 'CEO', email: 'ceo@kalpracrm.com', desc: 'Executive command center overview' },
   ];
 
   return (
@@ -254,15 +253,17 @@ export const Topbar: React.FC<TopbarProps> = ({ isCollapsed }) => {
           <div className="relative" ref={userMenuRef}>
             <button
               onClick={() => setShowUserMenu(!showUserMenu)}
-              className="flex items-center gap-2.5 p-1 pl-2 hover:bg-slate-100 rounded-xl transition-colors"
+              className="flex items-center gap-2.5 p-1 pl-2 hover:bg-slate-100 rounded-xl transition-colors cursor-pointer"
             >
               <img
                 src={user?.avatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80'}
-                alt={user?.name}
+                alt={user?.designation || user?.name}
                 className="w-8 h-8 rounded-xl object-cover border border-slate-200"
               />
               <div className="hidden sm:flex flex-col text-left">
-                <span className="text-xs font-bold text-slate-800 leading-none">{user?.name}</span>
+                <span className="text-xs font-bold text-slate-800 leading-none">
+                  {user?.designation || (user?.role === 'CEO' ? 'CEO' : user?.role === 'ADMIN' ? 'Marketing Head' : 'Marketing Executive')}
+                </span>
                 <span className="text-[10px] text-slate-400 capitalize mt-0.5">{user?.role?.toLowerCase()}</span>
               </div>
               <ChevronDown className="w-3.5 h-3.5 text-slate-400" />
@@ -272,10 +273,12 @@ export const Topbar: React.FC<TopbarProps> = ({ isCollapsed }) => {
             {showUserMenu && (
               <div className="absolute right-0 mt-2 w-56 bg-white rounded-2xl shadow-2xl border border-slate-100 py-1.5 z-50 animate-in fade-in zoom-in-95 duration-150">
                 <div className="px-4 py-2.5 border-b border-slate-100">
-                  <p className="text-xs font-bold text-slate-800">{user?.name}</p>
+                  <p className="text-xs font-bold text-slate-800">
+                    {user?.designation || (user?.role === 'CEO' ? 'Chief Executive Officer' : user?.role === 'ADMIN' ? 'Head of Marketing' : 'Marketing Executive')}
+                  </p>
                   <p className="text-[11px] text-slate-400 truncate">{user?.email}</p>
                   <span className="inline-block mt-1.5 px-2 py-0.5 text-[10px] font-bold rounded-md bg-brand-50 text-brand-700 uppercase">
-                    {user?.designation || user?.role}
+                    {user?.role}
                   </span>
                 </div>
 
