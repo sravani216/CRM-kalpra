@@ -388,3 +388,4 @@ export const PersonalNotes: React.FC<PersonalNotesProps> = ({
     </div>
   );
 };
+
