@@ -1,119 +1,87 @@
 import React, { useState, useEffect } from 'react';
 import { api } from '../services/api';
 import { useAuth } from '../context/AuthContext';
-import { Modal } from '../components/common/Modal';
-import { StatusBadge } from '../components/common/StatusBadge';
 import {
   Target,
   Search,
   Plus,
   Filter,
-  Users,
-  Calendar,
+  Eye,
+  FileText,
+  MapPin,
+  Phone,
   Building2,
+  Calendar,
+  X,
+  Sparkles,
+  CheckCircle2,
+  AlertCircle,
+  IndianRupee,
   Clock,
   ArrowRight,
-  UserCheck,
-  PhoneCall,
-  History,
-  AlertTriangle,
-  ChevronLeft,
-  ChevronRight,
-  TrendingUp,
-  FileText
+  UserCheck
 } from 'lucide-react';
+
+interface Lead {
+  id: string;
+  leadId: string;
+  clientId: string;
+  contactPerson: string;
+  designation: string;
+  companyName: string;
+  area: string;
+  contactNumber: string;
+  status: string;
+  priority: string;
+  requirement: string;
+  dealValue: number;
+  source: string;
+  notes?: string;
+  assignedToId?: string;
+  createdAt: string;
+}
 
 export const Leads: React.FC = () => {
   const { user } = useAuth();
 
-  const [leads, setLeads] = useState<any[]>([]);
+  const [leads, setLeads] = useState<Lead[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
-  const [statusFilter, setStatusFilter] = useState('');
-  const [priorityFilter, setPriorityFilter] = useState('');
-  const [employeeFilter, setEmployeeFilter] = useState('');
-  const [teamMembers, setTeamMembers] = useState<any[]>([]);
-  const [clientsList, setClientsList] = useState<any[]>([]);
-  const [page, setPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(1);
-  const [total, setTotal] = useState(0);
+  const [selectedArea, setSelectedArea] = useState('ALL');
 
-  // Modals state
-  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
-  const [isAssignModalOpen, setIsAssignModalOpen] = useState(false);
-  const [isStatusModalOpen, setIsStatusModalOpen] = useState(false);
-  const [isActivityModalOpen, setIsActivityModalOpen] = useState(false);
-  const [selectedLead, setSelectedLead] = useState<any>(null);
+  // Modals
+  const [isNewLeadModalOpen, setIsNewLeadModalOpen] = useState(false);
+  const [viewLead, setViewLead] = useState<Lead | null>(null);
+  const [notesLead, setNotesLead] = useState<Lead | null>(null);
+  const [leadNoteText, setLeadNoteText] = useState('');
+  const [isSavingNote, setIsSavingNote] = useState(false);
 
-  // Forms
-  const [createForm, setCreateForm] = useState({
-    clientId: '',
-    title: '',
-    source: 'Website',
-    priority: 'MEDIUM',
+  // New Lead Form State
+  const [newLeadForm, setNewLeadForm] = useState({
+    name: '',
+    designation: '',
+    companyName: '',
+    area: 'Hitec City, Hyderabad',
+    contactNumber: '',
+    email: '',
     requirement: '',
-    expectedValue: 500000,
-    assignedToId: '',
-    nextFollowUpDate: '',
-  });
-
-  const [assignForm, setAssignForm] = useState({
-    assignedToId: '',
+    expectedValue: 450000,
+    priority: 'MEDIUM',
     notes: '',
-  });
-
-  const [statusForm, setStatusForm] = useState({
-    status: 'CONTACTED',
-    remarks: '',
-    reason: '',
-  });
-
-  const [activityForm, setActivityForm] = useState({
-    type: 'CALL',
-    title: '',
-    description: '',
-    durationMinutes: 15,
-    outcome: '',
   });
 
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
-    fetchTeamAndClients();
-  }, []);
-
-  useEffect(() => {
     fetchLeads();
-  }, [search, statusFilter, priorityFilter, employeeFilter, page]);
-
-  const fetchTeamAndClients = async () => {
-    try {
-      const [teamRes, clientRes] = await Promise.all([
-        api.get('/auth/team'),
-        api.get('/clients', { limit: 100 }),
-      ]);
-      if (teamRes.success) setTeamMembers(teamRes.data || []);
-      if (clientRes.success) setClientsList(clientRes.data || []);
-    } catch (e) {}
-  };
+  }, []);
 
   const fetchLeads = async () => {
     setLoading(true);
     try {
-      const res = await api.get('/leads', {
-        search,
-        status: statusFilter,
-        priority: priorityFilter,
-        assignedToId: employeeFilter,
-        page,
-        limit: 12,
-      });
-      if (res.success) {
-        setLeads(res.data || []);
-        if (res.pagination) {
-          setTotalPages(res.pagination.totalPages);
-          setTotal(res.pagination.total);
-        }
+      const res = await api.get('/leads');
+      if (res.success && res.data) {
+        setLeads(res.data);
       }
     } catch (err) {
       console.error('Failed to load leads:', err);
@@ -122,713 +90,647 @@ export const Leads: React.FC = () => {
     }
   };
 
+  const handleOpenNotes = (lead: Lead) => {
+    setNotesLead(lead);
+    setLeadNoteText(lead.notes || '');
+  };
+
+  const handleSaveLeadNote = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!notesLead) return;
+    setIsSavingNote(true);
+    try {
+      await api.patch(`/leads/${notesLead.id}/notes`, { notes: leadNoteText });
+      setLeads((prev) =>
+        prev.map((l) => (l.id === notesLead.id ? { ...l, notes: leadNoteText } : l))
+      );
+      setNotesLead(null);
+    } catch (err) {
+      alert('Failed to save lead notes');
+    } finally {
+      setIsSavingNote(false);
+    }
+  };
+
   const handleCreateLead = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!newLeadForm.name.trim() || !newLeadForm.contactNumber.trim()) return;
+
     setIsSubmitting(true);
     try {
       const res = await api.post('/leads', {
-        ...createForm,
-        expectedValue: Number(createForm.expectedValue),
+        contactPerson: newLeadForm.name,
+        name: newLeadForm.name,
+        designation: newLeadForm.designation || 'Manager',
+        companyName: newLeadForm.companyName || `${newLeadForm.name} Enterprises`,
+        area: newLeadForm.area,
+        contactNumber: newLeadForm.contactNumber,
+        requirement: newLeadForm.requirement,
+        dealValue: Number(newLeadForm.expectedValue),
+        priority: newLeadForm.priority,
+        notes: newLeadForm.notes,
+        status: 'Interested',
       });
+
       if (res.success) {
-        setIsAddModalOpen(false);
-        setCreateForm({
-          clientId: '',
-          title: '',
-          source: 'Website',
-          priority: 'MEDIUM',
+        setIsNewLeadModalOpen(false);
+        setNewLeadForm({
+          name: '',
+          designation: '',
+          companyName: '',
+          area: 'Hitec City, Hyderabad',
+          contactNumber: '',
+          email: '',
           requirement: '',
-          expectedValue: 500000,
-          assignedToId: '',
-          nextFollowUpDate: '',
+          expectedValue: 450000,
+          priority: 'MEDIUM',
+          notes: '',
         });
         fetchLeads();
       }
-    } catch (err: any) {
-      alert(err.message || 'Failed to create lead');
+    } catch (err) {
+      alert('Failed to create lead');
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  const handleAssignLead = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!selectedLead) return;
-    setIsSubmitting(true);
-    try {
-      const res = await api.post(`/leads/${selectedLead.id}/assign`, assignForm);
-      if (res.success) {
-        setIsAssignModalOpen(false);
-        fetchLeads();
-      }
-    } catch (err: any) {
-      alert(err.message || 'Failed to assign lead');
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
+  // Extract unique areas for filter
+  const areas = Array.from(
+    new Set(leads.map((l) => l.area).filter(Boolean))
+  );
 
-  const handleStatusUpdate = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!selectedLead) return;
-    setIsSubmitting(true);
-    try {
-      const res = await api.post(`/leads/${selectedLead.id}/status`, {
-        status: statusForm.status,
-        remarks: statusForm.remarks,
-        lostReason: statusForm.status === 'LOST' ? statusForm.reason : undefined,
-        holdReason: statusForm.status === 'ON_HOLD' ? statusForm.reason : undefined,
-      });
-      if (res.success) {
-        setIsStatusModalOpen(false);
-        fetchLeads();
-      }
-    } catch (err: any) {
-      alert(err.message || 'Failed to update status');
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
+  const filteredLeads = leads.filter((l) => {
+    const matchesSearch =
+      l.contactPerson?.toLowerCase().includes(search.toLowerCase()) ||
+      l.designation?.toLowerCase().includes(search.toLowerCase()) ||
+      l.companyName?.toLowerCase().includes(search.toLowerCase()) ||
+      l.area?.toLowerCase().includes(search.toLowerCase()) ||
+      l.contactNumber?.includes(search) ||
+      l.leadId?.toLowerCase().includes(search.toLowerCase());
 
-  const handleRecordActivity = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!selectedLead) return;
-    setIsSubmitting(true);
-    try {
-      const res = await api.post(`/leads/${selectedLead.id}/activity`, {
-        ...activityForm,
-        durationMinutes: Number(activityForm.durationMinutes),
-      });
-      if (res.success) {
-        setIsActivityModalOpen(false);
-        setActivityForm({
-          type: 'CALL',
-          title: '',
-          description: '',
-          durationMinutes: 15,
-          outcome: '',
-        });
-        fetchLeads();
-      }
-    } catch (err: any) {
-      alert(err.message || 'Failed to log activity');
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
+    const matchesArea =
+      selectedArea === 'ALL' || (l.area && l.area.includes(selectedArea));
 
-  const canManageLeads = ['ADMIN', 'CEO', 'MANAGER'].includes(user?.role || '');
+    return matchesSearch && matchesArea;
+  });
+
+  const getStatusBadge = (status: string) => {
+    const s = status.toLowerCase();
+    if (s.includes('won')) {
+      return 'bg-emerald-100 text-emerald-800 border-emerald-200';
+    }
+    if (s.includes('interest')) {
+      return 'bg-blue-100 text-blue-800 border-blue-200';
+    }
+    if (s.includes('demo') || s.includes('schedul')) {
+      return 'bg-purple-100 text-purple-800 border-purple-200';
+    }
+    if (s.includes('proposal') || s.includes('negot')) {
+      return 'bg-amber-100 text-amber-800 border-amber-200';
+    }
+    if (s.includes('lost') || s.includes('not interest')) {
+      return 'bg-rose-100 text-rose-800 border-rose-200';
+    }
+    return 'bg-slate-100 text-slate-800 border-slate-200';
+  };
 
   return (
     <div className="space-y-6">
-      {/* Page Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      {/* Top Banner / Heading */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-gradient-to-r from-brand-600 via-indigo-600 to-purple-600 p-6 rounded-3xl text-white shadow-lg shadow-brand-500/15">
         <div>
-          <h2 className="text-xl font-bold text-slate-800">Lead Pipeline & Allocation</h2>
-          <p className="text-xs text-slate-500 mt-0.5">
-            Track prospective client opportunities, employee assignments, and conversion progress
+          <span className="text-xs font-extrabold uppercase tracking-widest text-brand-200">
+            Module 2 • Kalpra Tech CRM
+          </span>
+          <h1 className="text-2xl sm:text-3xl font-black tracking-tight mt-1">
+            Lead Management
+          </h1>
+          <p className="text-xs sm:text-sm text-brand-100 mt-1 max-w-xl">
+            Track prospective client contacts, write real-time lead notes, filter by territory area, and register new client opportunities.
           </p>
         </div>
-        {canManageLeads && (
-          <button
-            onClick={() => setIsAddModalOpen(true)}
-            className="px-4 py-2.5 bg-brand-600 hover:bg-brand-700 text-white font-bold text-xs rounded-xl shadow-md shadow-brand-500/20 flex items-center gap-2 transition-all self-start sm:self-auto"
-          >
-            <Plus className="w-4 h-4" /> Add New Lead
-          </button>
-        )}
+
+        <button
+          onClick={() => setIsNewLeadModalOpen(true)}
+          className="btn-smooth flex items-center justify-center gap-2 px-5 py-3 rounded-2xl bg-white text-brand-600 hover:text-brand-700 font-extrabold text-xs shadow-md transition-all self-start sm:self-center"
+        >
+          <Plus className="w-4 h-4 stroke-[3]" />
+          <span>+ Register New Lead</span>
+        </button>
       </div>
 
-      {/* Filter and Search Bar */}
-      <div className="p-4 bg-white rounded-2xl border border-slate-100 shadow-sm flex flex-col lg:flex-row items-center justify-between gap-3">
-        <div className="relative w-full lg:w-80">
-          <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
-          <input
-            type="text"
-            placeholder="Search leads by title, ID, client..."
-            value={search}
-            onChange={(e) => {
-              setSearch(e.target.value);
-              setPage(1);
-            }}
-            className="w-full bg-slate-50 border border-slate-200/80 rounded-xl pl-10 pr-4 py-2 text-xs text-slate-800 focus:bg-white focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500"
-          />
-        </div>
-
-        <div className="flex flex-wrap items-center gap-2.5 w-full lg:w-auto">
-          {canManageLeads && (
-            <select
-              value={employeeFilter}
-              onChange={(e) => {
-                setEmployeeFilter(e.target.value);
-                setPage(1);
-              }}
-              className="px-3 py-2 bg-slate-50 border border-slate-200/80 rounded-xl text-xs text-slate-700 font-medium focus:outline-none"
-            >
-              <option value="">All Assignees</option>
-              <option value="unassigned">Unassigned Only</option>
-              {teamMembers
-                .filter((m) => m.role === 'EMPLOYEE')
-                .map((m) => (
-                  <option key={m.id} value={m.id}>
-                    {m.name}
-                  </option>
-                ))}
-            </select>
-          )}
-
-          <select
-            value={statusFilter}
-            onChange={(e) => {
-              setStatusFilter(e.target.value);
-              setPage(1);
-            }}
-            className="px-3 py-2 bg-slate-50 border border-slate-200/80 rounded-xl text-xs text-slate-700 font-medium focus:outline-none"
-          >
-            <option value="">All Statuses</option>
-            <option value="NEW">New</option>
-            <option value="ASSIGNED">Assigned</option>
-            <option value="CONTACTED">Contacted</option>
-            <option value="INTERESTED">Interested</option>
-            <option value="DEMO_SCHEDULED">Demo Scheduled</option>
-            <option value="PROPOSAL_SENT">Proposal Sent</option>
-            <option value="NEGOTIATION">Negotiation</option>
-            <option value="WON">Won</option>
-            <option value="LOST">Lost</option>
-            <option value="ON_HOLD">On Hold</option>
-          </select>
-
-          <select
-            value={priorityFilter}
-            onChange={(e) => {
-              setPriorityFilter(e.target.value);
-              setPage(1);
-            }}
-            className="px-3 py-2 bg-slate-50 border border-slate-200/80 rounded-xl text-xs text-slate-700 font-medium focus:outline-none"
-          >
-            <option value="">All Priorities</option>
-            <option value="LOW">Low</option>
-            <option value="MEDIUM">Medium</option>
-            <option value="HIGH">High</option>
-            <option value="URGENT">Urgent</option>
-          </select>
-        </div>
-      </div>
-
-      {/* Leads Table */}
-      <div className="bg-white rounded-3xl border border-slate-100 shadow-sm overflow-hidden">
-        {loading ? (
-          <div className="p-12 text-center text-slate-400 text-xs">Loading leads...</div>
-        ) : leads.length === 0 ? (
-          <div className="p-12 text-center text-slate-400 text-xs">
-            No leads found matching the criteria.
+      {/* Filter and Search Bar On Top Of The List */}
+      <div className="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-3">
+        <div className="flex items-center gap-3 flex-1">
+          {/* Search Bar with Search Button */}
+          <div className="relative flex-1 max-w-md">
+            <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+            <input
+              type="text"
+              placeholder="Search by name, designation, company, phone..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-slate-200 text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500"
+            />
           </div>
-        ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse text-xs">
-              <thead>
-                <tr className="border-b border-slate-100 text-[11px] font-bold text-slate-400 uppercase tracking-wider bg-slate-50/50">
-                  <th className="py-3 px-5">Lead ID & Title</th>
-                  <th className="py-3 px-5">Client Organization</th>
-                  <th className="py-3 px-5">Assigned Employee</th>
-                  <th className="py-3 px-5">Expected Value</th>
-                  <th className="py-3 px-5">Priority</th>
-                  <th className="py-3 px-5">Status</th>
-                  <th className="py-3 px-5">Contacted</th>
-                  <th className="py-3 px-5 text-right">Actions</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100">
-                {leads.map((l) => (
-                  <tr key={l.id} className="hover:bg-slate-50/70 transition-colors">
-                    <td className="py-3.5 px-5">
-                      <div className="font-bold text-slate-800">{l.leadId}</div>
-                      <div className="text-slate-600 font-medium mt-0.5">{l.title}</div>
-                    </td>
-                    <td className="py-3.5 px-5">
-                      <div className="font-bold text-slate-800">{l.client.organization}</div>
-                      <div className="text-[11px] text-slate-400 mt-0.5">{l.client.location}</div>
-                    </td>
-                    <td className="py-3.5 px-5">
-                      {l.assignedTo ? (
-                        <div className="flex items-center gap-2">
-                          <img
-                            src={l.assignedTo.avatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80'}
-                            alt={l.assignedTo.name}
-                            className="w-6 h-6 rounded-full object-cover border"
-                          />
-                          <span className="font-semibold text-slate-800">{l.assignedTo.name}</span>
-                        </div>
-                      ) : (
-                        <span className="px-2 py-0.5 rounded-md bg-amber-50 text-amber-700 font-bold text-[10px]">
-                          Unassigned
-                        </span>
-                      )}
-                    </td>
-                    <td className="py-3.5 px-5 font-bold text-slate-800">
-                      INR {l.expectedValue?.toLocaleString()}
-                    </td>
-                    <td className="py-3.5 px-5">
-                      <StatusBadge status={l.priority} type="priority" />
-                    </td>
-                    <td className="py-3.5 px-5">
-                      <StatusBadge status={l.status} type="lead" />
-                    </td>
-                    <td className="py-3.5 px-5">
-                      <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
-                        l.hasContacted ? 'bg-teal-50 text-teal-700' : 'bg-slate-100 text-slate-500'
-                      }`}>
-                        {l.hasContacted ? 'Yes' : 'No'}
-                      </span>
-                    </td>
-                    <td className="py-3.5 px-5 text-right">
-                      <div className="flex items-center justify-end gap-1.5">
-                        {/* Assign / Reassign Button */}
-                        {canManageLeads && (
-                          <button
-                            onClick={() => {
-                              setSelectedLead(l);
-                              setAssignForm({ assignedToId: l.assignedToId || '', notes: '' });
-                              setIsAssignModalOpen(true);
-                            }}
-                            className="p-1.5 text-slate-500 hover:text-brand-600 hover:bg-brand-50 rounded-lg transition-colors"
-                            title="Assign or Reassign Employee"
-                          >
-                            <UserCheck className="w-4 h-4" />
-                          </button>
-                        )}
 
-                        {/* Status Change Button */}
-                        <button
-                          onClick={() => {
-                            setSelectedLead(l);
-                            setStatusForm({ status: l.status, remarks: '', reason: '' });
-                            setIsStatusModalOpen(true);
-                          }}
-                          className="p-1.5 text-slate-500 hover:text-emerald-600 hover:bg-emerald-50 rounded-lg transition-colors"
-                          title="Update Lead Stage / Status"
-                        >
-                          <TrendingUp className="w-4 h-4" />
-                        </button>
-
-                        {/* Log Activity Button */}
-                        <button
-                          onClick={() => {
-                            setSelectedLead(l);
-                            setActivityForm({
-                              type: 'CALL',
-                              title: `Discussion with ${l.client.name}`,
-                              description: '',
-                              durationMinutes: 15,
-                              outcome: 'Positive discussion',
-                            });
-                            setIsActivityModalOpen(true);
-                          }}
-                          className="p-1.5 text-slate-500 hover:text-teal-600 hover:bg-teal-50 rounded-lg transition-colors"
-                          title="Record Call / Meeting Discussion"
-                        >
-                          <PhoneCall className="w-4 h-4" />
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
-
-        {/* Pagination */}
-        <div className="flex items-center justify-between px-6 py-4 border-t border-slate-100 bg-slate-50/30 text-xs">
-          <span className="text-slate-500 font-medium">
-            Showing <span className="font-bold text-slate-700">{leads.length}</span> of <span className="font-bold text-slate-700">{total}</span> leads
-          </span>
+          {/* Area Filter Dropdown */}
           <div className="flex items-center gap-2">
-            <button
-              onClick={() => setPage((p) => Math.max(1, p - 1))}
-              disabled={page <= 1}
-              className="p-1.5 text-slate-500 hover:bg-slate-100 rounded-lg disabled:opacity-30"
-            >
-              <ChevronLeft className="w-4 h-4" />
-            </button>
-            <span className="font-semibold text-slate-700">
-              Page {page} of {totalPages || 1}
-            </span>
-            <button
-              onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-              disabled={page >= totalPages}
-              className="p-1.5 text-slate-500 hover:bg-slate-100 rounded-lg disabled:opacity-30"
-            >
-              <ChevronRight className="w-4 h-4" />
-            </button>
-          </div>
-        </div>
-      </div>
-
-      {/* Add Lead Modal */}
-      <Modal
-        isOpen={isAddModalOpen}
-        onClose={() => setIsAddModalOpen(false)}
-        title="Create New Sales Lead"
-        subtitle="Associate prospective requirement with a registered client"
-        maxWidth="lg"
-      >
-        <form onSubmit={handleCreateLead} className="space-y-4">
-          <div>
-            <label className="block text-xs font-bold text-slate-700 mb-1">Select Client Organization *</label>
+            <Filter className="w-4 h-4 text-slate-400 shrink-0" />
             <select
-              required
-              value={createForm.clientId}
-              onChange={(e) => setCreateForm({ ...createForm, clientId: e.target.value })}
-              className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-800 focus:bg-white focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500"
+              value={selectedArea}
+              onChange={(e) => setSelectedArea(e.target.value)}
+              className="px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs font-bold text-slate-700 bg-white focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 cursor-pointer"
             >
-              <option value="">Choose client...</option>
-              {clientsList.map((c) => (
-                <option key={c.id} value={c.id}>
-                  {c.clientId} - {c.organization} ({c.name})
+              <option value="ALL">All Areas (Territories)</option>
+              {areas.map((a, i) => (
+                <option key={i} value={a}>
+                  {a}
                 </option>
               ))}
             </select>
           </div>
+        </div>
 
-          <div>
-            <label className="block text-xs font-bold text-slate-700 mb-1">Lead Title / Opportunity Name *</label>
-            <input
-              type="text"
-              required
-              value={createForm.title}
-              onChange={(e) => setCreateForm({ ...createForm, title: e.target.value })}
-              placeholder="e.g. Enterprise CRM Cloud Rollout"
-              className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-800 focus:bg-white focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500"
-            />
-          </div>
+        <div className="flex items-center gap-2 text-xs font-bold text-slate-500 self-end md:self-auto">
+          <span>Found:</span>
+          <span className="px-2.5 py-1 rounded-full bg-brand-50 text-brand-600 font-extrabold">
+            {filteredLeads.length} Leads
+          </span>
+        </div>
+      </div>
 
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-xs font-bold text-slate-700 mb-1">Expected Deal Value (INR) *</label>
-              <input
-                type="number"
-                required
-                min={0}
-                step={50000}
-                value={createForm.expectedValue}
-                onChange={(e) => setCreateForm({ ...createForm, expectedValue: Number(e.target.value) })}
-                className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-800 focus:bg-white focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500"
-              />
-            </div>
+      {/* Leads List / Table */}
+      <div className="bg-white rounded-3xl border border-slate-100 shadow-sm overflow-hidden">
+        <div className="overflow-x-auto">
+          <table className="w-full text-left border-collapse">
+            <thead>
+              <tr className="bg-slate-50/80 border-b border-slate-100 text-[11px] font-bold text-slate-400 uppercase tracking-wider">
+                <th className="py-4 px-5">Name along with Designation</th>
+                <th className="py-4 px-5">Area & Contact Number</th>
+                <th className="py-4 px-5">Status of the Lead</th>
+                <th className="py-4 px-5 text-right">Actions</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-100 text-xs">
+              {filteredLeads.length === 0 ? (
+                <tr>
+                  <td colSpan={4} className="py-12 text-center text-slate-400">
+                    <Target className="w-10 h-10 mx-auto mb-2 text-slate-300" />
+                    <p className="font-bold text-slate-600">No leads found</p>
+                    <p className="text-[11px] text-slate-400 mt-0.5">
+                      Try adjusting the search query or area filter.
+                    </p>
+                  </td>
+                </tr>
+              ) : (
+                filteredLeads.map((lead) => (
+                  <tr
+                    key={lead.id}
+                    className="hover:bg-slate-50/70 transition-colors group"
+                  >
+                    {/* Name along with designation */}
+                    <td className="py-4 px-5">
+                      <div className="flex items-start gap-3">
+                        <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-brand-50 to-indigo-50 border border-brand-200/50 flex items-center justify-center text-brand-600 font-black text-sm shrink-0">
+                          {lead.contactPerson ? lead.contactPerson[0] : 'L'}
+                        </div>
+                        <div>
+                          <span className="font-extrabold text-slate-900 block leading-tight text-sm">
+                            {lead.contactPerson}
+                          </span>
+                          <span className="text-[11px] font-bold text-brand-600 block mt-0.5">
+                            {lead.designation}
+                          </span>
+                          <span className="text-[10px] text-slate-400 block">
+                            {lead.companyName}
+                          </span>
+                        </div>
+                      </div>
+                    </td>
 
-            <div>
-              <label className="block text-xs font-bold text-slate-700 mb-1">Priority Level</label>
-              <select
-                value={createForm.priority}
-                onChange={(e) => setCreateForm({ ...createForm, priority: e.target.value })}
-                className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-800 focus:bg-white focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500"
-              >
-                <option value="LOW">Low</option>
-                <option value="MEDIUM">Medium</option>
-                <option value="HIGH">High</option>
-                <option value="URGENT">Urgent</option>
-              </select>
-            </div>
-          </div>
+                    {/* Area and contact number */}
+                    <td className="py-4 px-5">
+                      <div>
+                        <span className="font-semibold text-slate-800 flex items-center gap-1.5">
+                          <MapPin className="w-3.5 h-3.5 text-rose-500 shrink-0" />
+                          {lead.area || 'Hyderabad'}
+                        </span>
+                        <span className="text-[11px] text-slate-500 flex items-center gap-1.5 mt-1 font-mono">
+                          <Phone className="w-3 h-3 text-slate-400 shrink-0" />
+                          {lead.contactNumber || '+91 90000 00000'}
+                        </span>
+                      </div>
+                    </td>
 
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-xs font-bold text-slate-700 mb-1">Lead Source</label>
-              <select
-                value={createForm.source}
-                onChange={(e) => setCreateForm({ ...createForm, source: e.target.value })}
-                className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-800 focus:bg-white focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500"
-              >
-                <option value="Website">Website</option>
-                <option value="Cold Call">Cold Call</option>
-                <option value="Referral">Referral</option>
-                <option value="Exhibition">Exhibition</option>
-                <option value="Social Media">Social Media</option>
-              </select>
-            </div>
+                    {/* Status of the lead */}
+                    <td className="py-4 px-5">
+                      <span
+                        className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold border ${getStatusBadge(
+                          lead.status
+                        )}`}
+                      >
+                        <span className="w-1.5 h-1.5 rounded-full bg-current" />
+                        {lead.status}
+                      </span>
+                      {lead.dealValue && (
+                        <span className="block text-[11px] text-slate-500 font-bold mt-1">
+                          ₹ {Number(lead.dealValue).toLocaleString('en-IN')}
+                        </span>
+                      )}
+                    </td>
 
-            <div>
-              <label className="block text-xs font-bold text-slate-700 mb-1">Allocate Employee (Optional)</label>
-              <select
-                value={createForm.assignedToId}
-                onChange={(e) => setCreateForm({ ...createForm, assignedToId: e.target.value })}
-                className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-800 focus:bg-white focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500"
-              >
-                <option value="">Leave Unassigned</option>
-                {teamMembers
-                  .filter((m) => m.role === 'EMPLOYEE')
-                  .map((m) => (
-                    <option key={m.id} value={m.id}>
-                      {m.name} ({m.designation})
-                    </option>
-                  ))}
-              </select>
-            </div>
-          </div>
+                    {/* Actions: small view button & small notes option */}
+                    <td className="py-4 px-5 text-right">
+                      <div className="flex items-center justify-end gap-2">
+                        {/* Small notes option */}
+                        <button
+                          onClick={() => handleOpenNotes(lead)}
+                          className="btn-smooth flex items-center gap-1 px-3 py-1.5 rounded-xl border border-slate-200 hover:border-amber-300 bg-amber-50/70 text-amber-800 hover:bg-amber-100 font-bold text-[11px] transition-all"
+                          title="Write notes about this lead"
+                        >
+                          <FileText className="w-3.5 h-3.5" />
+                          <span>Notes</span>
+                        </button>
 
-          <div>
-            <label className="block text-xs font-bold text-slate-700 mb-1">Detailed Requirement *</label>
-            <textarea
-              rows={3}
-              required
-              value={createForm.requirement}
-              onChange={(e) => setCreateForm({ ...createForm, requirement: e.target.value })}
-              placeholder="Describe deliverables, scope, and technical requirements..."
-              className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-800 focus:bg-white focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500"
-            />
-          </div>
+                        {/* Small view button */}
+                        <button
+                          onClick={() => setViewLead(lead)}
+                          className="btn-smooth flex items-center gap-1 px-3 py-1.5 rounded-xl border border-slate-200 hover:border-brand-300 bg-brand-50/70 text-brand-700 hover:bg-brand-100 font-bold text-[11px] transition-all"
+                          title="View lead details card"
+                        >
+                          <Eye className="w-3.5 h-3.5" />
+                          <span>View</span>
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
+      </div>
 
-          <div className="flex items-center justify-end gap-3 pt-3 border-t border-slate-100">
-            <button
-              type="button"
-              onClick={() => setIsAddModalOpen(false)}
-              className="px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100 rounded-xl"
-            >
-              Cancel
-            </button>
-            <button
-              type="submit"
-              disabled={isSubmitting}
-              className="px-5 py-2.5 bg-brand-600 hover:bg-brand-700 text-white font-bold text-xs rounded-xl shadow-md shadow-brand-500/20"
-            >
-              {isSubmitting ? 'Creating...' : 'Create Lead'}
-            </button>
-          </div>
-        </form>
-      </Modal>
-
-      {/* Assign / Reassign Modal */}
-      {selectedLead && (
-        <Modal
-          isOpen={isAssignModalOpen}
-          onClose={() => setIsAssignModalOpen(false)}
-          title={`Assign Lead: ${selectedLead.leadId}`}
-          subtitle={`Current Assignee: ${selectedLead.assignedTo?.name || 'Unassigned'}`}
-          maxWidth="md"
-        >
-          <form onSubmit={handleAssignLead} className="space-y-4">
-            <div>
-              <label className="block text-xs font-bold text-slate-700 mb-1">Select Employee *</label>
-              <select
-                required
-                value={assignForm.assignedToId}
-                onChange={(e) => setAssignForm({ ...assignForm, assignedToId: e.target.value })}
-                className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-800 focus:bg-white focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500"
-              >
-                <option value="">Choose executive...</option>
-                {teamMembers
-                  .filter((m) => m.role === 'EMPLOYEE')
-                  .map((m) => (
-                    <option key={m.id} value={m.id}>
-                      {m.name} - {m.designation}
-                    </option>
-                  ))}
-              </select>
-            </div>
-
-            <div>
-              <label className="block text-xs font-bold text-slate-700 mb-1">Assignment Remarks / Notes</label>
-              <textarea
-                rows={3}
-                value={assignForm.notes}
-                onChange={(e) => setAssignForm({ ...assignForm, notes: e.target.value })}
-                placeholder="Special instructions or background context..."
-                className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-800 focus:bg-white focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500"
-              />
-            </div>
-
-            <div className="flex items-center justify-end gap-3 pt-3 border-t border-slate-100">
+      {/* VIEW LEAD CARD MODAL (Requirement: "show the details in a card") */}
+      {viewLead && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm animate-fade-in">
+          <div className="bg-white rounded-3xl p-6 sm:p-7 max-w-lg w-full shadow-2xl border border-slate-100">
+            <div className="flex items-center justify-between pb-4 border-b border-slate-100">
+              <div className="flex items-center gap-3">
+                <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-brand-600 to-indigo-600 flex items-center justify-center text-white font-black text-xl shadow-md shadow-brand-500/20">
+                  {viewLead.contactPerson ? viewLead.contactPerson[0] : 'L'}
+                </div>
+                <div>
+                  <h3 className="text-base font-extrabold text-slate-900">
+                    {viewLead.contactPerson}
+                  </h3>
+                  <p className="text-xs font-bold text-brand-600">{viewLead.designation}</p>
+                </div>
+              </div>
               <button
-                type="button"
-                onClick={() => setIsAssignModalOpen(false)}
-                className="px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100 rounded-xl"
+                onClick={() => setViewLead(null)}
+                className="p-1.5 rounded-xl hover:bg-slate-100 text-slate-400 hover:text-slate-600"
               >
-                Cancel
-              </button>
-              <button
-                type="submit"
-                disabled={isSubmitting}
-                className="px-4 py-2 bg-brand-600 hover:bg-brand-700 text-white font-bold text-xs rounded-xl shadow-md"
-              >
-                {isSubmitting ? 'Saving...' : 'Confirm Assignment'}
+                <X className="w-5 h-5" />
               </button>
             </div>
-          </form>
-        </Modal>
+
+            {/* Detailed Card Body */}
+            <div className="mt-5 space-y-4 text-xs">
+              <div className="grid grid-cols-2 gap-3 p-4 bg-slate-50 rounded-2xl border border-slate-100">
+                <div>
+                  <span className="text-[10px] font-bold text-slate-400 uppercase block">Company</span>
+                  <span className="font-extrabold text-slate-800 text-sm block">
+                    {viewLead.companyName}
+                  </span>
+                </div>
+                <div>
+                  <span className="text-[10px] font-bold text-slate-400 uppercase block">Area / Territory</span>
+                  <span className="font-bold text-slate-800 flex items-center gap-1 mt-0.5">
+                    <MapPin className="w-3.5 h-3.5 text-rose-500" />
+                    {viewLead.area}
+                  </span>
+                </div>
+                <div>
+                  <span className="text-[10px] font-bold text-slate-400 uppercase block">Contact Phone</span>
+                  <span className="font-mono font-bold text-slate-800 flex items-center gap-1 mt-0.5">
+                    <Phone className="w-3.5 h-3.5 text-emerald-500" />
+                    {viewLead.contactNumber}
+                  </span>
+                </div>
+                <div>
+                  <span className="text-[10px] font-bold text-slate-400 uppercase block">Status</span>
+                  <span
+                    className={`inline-block mt-0.5 px-2.5 py-0.5 rounded-full text-[11px] font-extrabold border ${getStatusBadge(
+                      viewLead.status
+                    )}`}
+                  >
+                    {viewLead.status}
+                  </span>
+                </div>
+              </div>
+
+              <div>
+                <span className="text-[10px] font-bold text-slate-400 uppercase block mb-1">
+                  Expected Deal Value
+                </span>
+                <div className="p-3 bg-emerald-50/70 border border-emerald-100 rounded-xl flex items-center justify-between">
+                  <span className="text-sm font-black text-emerald-700">
+                    ₹ {Number(viewLead.dealValue || 0).toLocaleString('en-IN')}
+                  </span>
+                  <span className="text-[10px] font-bold text-emerald-600 bg-emerald-100 px-2 py-0.5 rounded">
+                    Priority: {viewLead.priority || 'MEDIUM'}
+                  </span>
+                </div>
+              </div>
+
+              <div>
+                <span className="text-[10px] font-bold text-slate-400 uppercase block mb-1">
+                  Requirement Scope
+                </span>
+                <p className="p-3 bg-slate-50 border border-slate-100 rounded-xl text-slate-700 font-medium leading-relaxed">
+                  {viewLead.requirement || 'Standard CRM and marketing tracking requirement.'}
+                </p>
+              </div>
+
+              {viewLead.notes && (
+                <div>
+                  <span className="text-[10px] font-bold text-slate-400 uppercase block mb-1">
+                    Employee Notes on Lead
+                  </span>
+                  <p className="p-3 bg-amber-50/80 border border-amber-200 rounded-xl text-amber-950 font-medium leading-relaxed italic">
+                    "{viewLead.notes}"
+                  </p>
+                </div>
+              )}
+            </div>
+
+            <div className="mt-6 pt-3 border-t border-slate-100 flex items-center justify-between">
+              <span className="text-[11px] text-slate-400 font-mono">ID: {viewLead.leadId}</span>
+              <button
+                onClick={() => setViewLead(null)}
+                className="btn-smooth px-5 py-2 rounded-xl bg-slate-900 text-white font-bold text-xs"
+              >
+                Close Card
+              </button>
+            </div>
+          </div>
+        </div>
       )}
 
-      {/* Update Status Modal */}
-      {selectedLead && (
-        <Modal
-          isOpen={isStatusModalOpen}
-          onClose={() => setIsStatusModalOpen(false)}
-          title={`Update Lead Status: ${selectedLead.leadId}`}
-          subtitle={`Current Stage: ${selectedLead.status}`}
-          maxWidth="md"
-        >
-          <form onSubmit={handleStatusUpdate} className="space-y-4">
-            <div>
-              <label className="block text-xs font-bold text-slate-700 mb-1">New Stage / Status *</label>
-              <select
-                required
-                value={statusForm.status}
-                onChange={(e) => setStatusForm({ ...statusForm, status: e.target.value })}
-                className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-800 focus:bg-white focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500"
+      {/* SMALL NOTES MODAL (Requirement: "a small notes option to write notes about that particular lead") */}
+      {notesLead && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm animate-fade-in">
+          <div className="bg-white rounded-3xl p-6 max-w-md w-full shadow-2xl border border-slate-100">
+            <div className="flex items-center justify-between pb-4 border-b border-slate-100">
+              <div className="flex items-center gap-2.5">
+                <div className="w-10 h-10 rounded-xl bg-amber-50 text-amber-700 flex items-center justify-center">
+                  <FileText className="w-5 h-5" />
+                </div>
+                <div>
+                  <h4 className="text-base font-bold text-slate-900">
+                    Notes for {notesLead.contactPerson}
+                  </h4>
+                  <p className="text-xs text-slate-400">
+                    {notesLead.designation} • {notesLead.companyName}
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={() => setNotesLead(null)}
+                className="p-1 rounded-lg text-slate-400 hover:text-slate-600"
               >
-                <option value="NEW">New</option>
-                <option value="ASSIGNED">Assigned</option>
-                <option value="CONTACTED">Contacted</option>
-                <option value="INTERESTED">Interested</option>
-                <option value="DEMO_SCHEDULED">Demo Scheduled</option>
-                <option value="PROPOSAL_SENT">Proposal Sent</option>
-                <option value="NEGOTIATION">Negotiation</option>
-                <option value="WON">Won (Deal Conversion)</option>
-                <option value="LOST">Lost</option>
-                <option value="ON_HOLD">On Hold</option>
-              </select>
+                <X className="w-5 h-5" />
+              </button>
             </div>
 
-            {(statusForm.status === 'LOST' || statusForm.status === 'ON_HOLD') && (
+            <form onSubmit={handleSaveLeadNote} className="mt-4 space-y-4">
               <div>
-                <label className="block text-xs font-bold text-rose-700 mb-1">
-                  Reason for {statusForm.status === 'LOST' ? 'Lost Opportunity' : 'Placing On Hold'} *
+                <label className="block text-xs font-bold text-slate-700 mb-1">
+                  Lead Observations & Discussion Notes
+                </label>
+                <textarea
+                  rows={4}
+                  required
+                  placeholder="Record client meeting notes, budget constraints, feature requests, or follow-up notes..."
+                  value={leadNoteText}
+                  onChange={(e) => setLeadNoteText(e.target.value)}
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs focus:ring-2 focus:ring-amber-500/20 focus:border-amber-400"
+                />
+              </div>
+
+              <div className="flex items-center justify-end gap-2 pt-2 border-t border-slate-100">
+                <button
+                  type="button"
+                  onClick={() => setNotesLead(null)}
+                  className="px-4 py-2 rounded-xl border border-slate-200 text-xs font-bold text-slate-600 hover:bg-slate-50"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={isSavingNote}
+                  className="btn-amber px-5 py-2 rounded-xl bg-amber-500 hover:bg-amber-600 text-white font-bold text-xs shadow-md shadow-amber-500/20"
+                >
+                  {isSavingNote ? 'Saving...' : 'Save Lead Notes'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* NEW LEAD REGISTRATION FORM MODAL */}
+      {isNewLeadModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm animate-fade-in overflow-y-auto">
+          <div className="bg-white rounded-3xl p-6 sm:p-7 max-w-lg w-full shadow-2xl border border-slate-100 my-8">
+            <div className="flex items-center justify-between pb-4 border-b border-slate-100">
+              <div className="flex items-center gap-2.5">
+                <div className="w-10 h-10 rounded-xl bg-brand-50 text-brand-600 flex items-center justify-center">
+                  <Sparkles className="w-5 h-5 text-brand-500" />
+                </div>
+                <div>
+                  <h3 className="text-base font-bold text-slate-900">Register New Lead</h3>
+                  <p className="text-xs text-slate-400">Add prospective marketing contact</p>
+                </div>
+              </div>
+              <button
+                onClick={() => setIsNewLeadModalOpen(false)}
+                className="p-1 rounded-lg text-slate-400 hover:text-slate-600"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <form onSubmit={handleCreateLead} className="mt-4 space-y-3.5">
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 mb-1">
+                    Contact Name *
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="e.g. Anand Murthy"
+                    value={newLeadForm.name}
+                    onChange={(e) => setNewLeadForm({ ...newLeadForm, name: e.target.value })}
+                    className="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs font-semibold focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 mb-1">
+                    Designation *
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="e.g. Procurement Director"
+                    value={newLeadForm.designation}
+                    onChange={(e) =>
+                      setNewLeadForm({ ...newLeadForm, designation: e.target.value })
+                    }
+                    className="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs font-semibold focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-700 mb-1">
+                  Company / Organization Name *
                 </label>
                 <input
                   type="text"
                   required
-                  value={statusForm.reason}
-                  onChange={(e) => setStatusForm({ ...statusForm, reason: e.target.value })}
-                  placeholder="e.g. Budget deferral to Q4, competitor pricing..."
-                  className="w-full px-3 py-2 bg-rose-50 border border-rose-200 rounded-xl text-xs text-slate-800 focus:bg-white focus:outline-none focus:ring-2 focus:ring-rose-500/20"
+                  placeholder="e.g. Sigma Tech Logistics Pvt Ltd"
+                  value={newLeadForm.companyName}
+                  onChange={(e) =>
+                    setNewLeadForm({ ...newLeadForm, companyName: e.target.value })
+                  }
+                  className="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs font-semibold focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500"
                 />
               </div>
-            )}
 
-            <div>
-              <label className="block text-xs font-bold text-slate-700 mb-1">Progress Remarks</label>
-              <textarea
-                rows={3}
-                value={statusForm.remarks}
-                onChange={(e) => setStatusForm({ ...statusForm, remarks: e.target.value })}
-                placeholder="Add meeting outcome, proposal revisions, or timeline..."
-                className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-800 focus:bg-white focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500"
-              />
-            </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 mb-1">
+                    Area (Territory) *
+                  </label>
+                  <select
+                    value={newLeadForm.area}
+                    onChange={(e) => setNewLeadForm({ ...newLeadForm, area: e.target.value })}
+                    className="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs font-bold bg-white focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500"
+                  >
+                    <option value="Hitec City, Hyderabad">Hitec City, Hyderabad</option>
+                    <option value="Gachibowli, Hyderabad">Gachibowli, Hyderabad</option>
+                    <option value="Madhapur, Hyderabad">Madhapur, Hyderabad</option>
+                    <option value="Jubilee Hills, Hyderabad">Jubilee Hills, Hyderabad</option>
+                    <option value="Banjara Hills, Hyderabad">Banjara Hills, Hyderabad</option>
+                    <option value="Kondapur, Hyderabad">Kondapur, Hyderabad</option>
+                    <option value="Begumpet, Hyderabad">Begumpet, Hyderabad</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 mb-1">
+                    Contact Number *
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="+91 98765 00000"
+                    value={newLeadForm.contactNumber}
+                    onChange={(e) =>
+                      setNewLeadForm({ ...newLeadForm, contactNumber: e.target.value })
+                    }
+                    className="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs font-mono font-bold focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500"
+                  />
+                </div>
+              </div>
 
-            <div className="flex items-center justify-end gap-3 pt-3 border-t border-slate-100">
-              <button
-                type="button"
-                onClick={() => setIsStatusModalOpen(false)}
-                className="px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100 rounded-xl"
-              >
-                Cancel
-              </button>
-              <button
-                type="submit"
-                disabled={isSubmitting}
-                className="px-4 py-2 bg-brand-600 hover:bg-brand-700 text-white font-bold text-xs rounded-xl shadow-md"
-              >
-                {isSubmitting ? 'Updating...' : 'Save Status'}
-              </button>
-            </div>
-          </form>
-        </Modal>
-      )}
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 mb-1">
+                    Expected Budget (₹)
+                  </label>
+                  <input
+                    type="number"
+                    min={50000}
+                    value={newLeadForm.expectedValue}
+                    onChange={(e) =>
+                      setNewLeadForm({
+                        ...newLeadForm,
+                        expectedValue: Number(e.target.value),
+                      })
+                    }
+                    className="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs font-bold focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 mb-1">Priority</label>
+                  <select
+                    value={newLeadForm.priority}
+                    onChange={(e) =>
+                      setNewLeadForm({ ...newLeadForm, priority: e.target.value })
+                    }
+                    className="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs font-bold bg-white"
+                  >
+                    <option value="LOW">Low</option>
+                    <option value="MEDIUM">Medium</option>
+                    <option value="HIGH">High</option>
+                    <option value="URGENT">Urgent ⚡</option>
+                  </select>
+                </div>
+              </div>
 
-      {/* Record Activity Modal */}
-      {selectedLead && (
-        <Modal
-          isOpen={isActivityModalOpen}
-          onClose={() => setIsActivityModalOpen(false)}
-          title={`Log Interaction Activity`}
-          subtitle={`Lead: ${selectedLead.leadId} &bull; ${selectedLead.client?.organization}`}
-          maxWidth="md"
-        >
-          <form onSubmit={handleRecordActivity} className="space-y-4">
-            <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1">Activity Type *</label>
-                <select
-                  value={activityForm.type}
-                  onChange={(e) => setActivityForm({ ...activityForm, type: e.target.value })}
-                  className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-800 focus:bg-white focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500"
+                <label className="block text-xs font-bold text-slate-700 mb-1">
+                  Client Requirement
+                </label>
+                <textarea
+                  rows={2}
+                  placeholder="Key features required by the client..."
+                  value={newLeadForm.requirement}
+                  onChange={(e) =>
+                    setNewLeadForm({ ...newLeadForm, requirement: e.target.value })
+                  }
+                  className="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-700 mb-1">
+                  Initial Notes about that particular lead
+                </label>
+                <textarea
+                  rows={2}
+                  placeholder="Notes about client background, decision makers..."
+                  value={newLeadForm.notes}
+                  onChange={(e) => setNewLeadForm({ ...newLeadForm, notes: e.target.value })}
+                  className="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500"
+                />
+              </div>
+
+              <div className="flex items-center justify-end gap-2 pt-3 border-t border-slate-100">
+                <button
+                  type="button"
+                  onClick={() => setIsNewLeadModalOpen(false)}
+                  className="px-4 py-2 rounded-xl border border-slate-200 text-xs font-bold text-slate-600 hover:bg-slate-50"
                 >
-                  <option value="CALL">Call</option>
-                  <option value="MEETING">Meeting</option>
-                  <option value="DISCUSSION">Client Discussion</option>
-                  <option value="DEMO">Product Demo</option>
-                  <option value="PROPOSAL">Proposal Submission</option>
-                  <option value="NOTE">Note</option>
-                </select>
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={isSubmitting}
+                  className="btn-smooth px-5 py-2.5 rounded-xl bg-brand-600 hover:bg-brand-700 text-white font-bold text-xs shadow-md shadow-brand-500/20"
+                >
+                  {isSubmitting ? 'Registering...' : 'Save & Register Lead'}
+                </button>
               </div>
-
-              <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1">Duration (Mins)</label>
-                <input
-                  type="number"
-                  min={1}
-                  value={activityForm.durationMinutes}
-                  onChange={(e) => setActivityForm({ ...activityForm, durationMinutes: Number(e.target.value) })}
-                  className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-800 focus:bg-white focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500"
-                />
-              </div>
-            </div>
-
-            <div>
-              <label className="block text-xs font-bold text-slate-700 mb-1">Discussion Subject / Title *</label>
-              <input
-                type="text"
-                required
-                value={activityForm.title}
-                onChange={(e) => setActivityForm({ ...activityForm, title: e.target.value })}
-                placeholder="e.g. Discovery call regarding 50 user license"
-                className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-800 focus:bg-white focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500"
-              />
-            </div>
-
-            <div>
-              <label className="block text-xs font-bold text-slate-700 mb-1">Interaction Outcome / Response</label>
-              <input
-                type="text"
-                value={activityForm.outcome}
-                onChange={(e) => setActivityForm({ ...activityForm, outcome: e.target.value })}
-                placeholder="e.g. Client agreed to schedule demo on Thursday"
-                className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-800 focus:bg-white focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500"
-              />
-            </div>
-
-            <div>
-              <label className="block text-xs font-bold text-slate-700 mb-1">Discussion Details</label>
-              <textarea
-                rows={3}
-                value={activityForm.description}
-                onChange={(e) => setActivityForm({ ...activityForm, description: e.target.value })}
-                placeholder="Log discussion points, objections raised, agreed next steps..."
-                className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-800 focus:bg-white focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500"
-              />
-            </div>
-
-            <div className="flex items-center justify-end gap-3 pt-3 border-t border-slate-100">
-              <button
-                type="button"
-                onClick={() => setIsActivityModalOpen(false)}
-                className="px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100 rounded-xl"
-              >
-                Cancel
-              </button>
-              <button
-                type="submit"
-                disabled={isSubmitting}
-                className="px-4 py-2 bg-teal-600 hover:bg-teal-700 text-white font-bold text-xs rounded-xl shadow-md"
-              >
-                {isSubmitting ? 'Recording...' : 'Log Activity'}
-              </button>
-            </div>
-          </form>
-        </Modal>
+            </form>
+          </div>
+        </div>
       )}
     </div>
   );
 };
-

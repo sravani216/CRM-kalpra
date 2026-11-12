@@ -7,14 +7,12 @@ import { AppLayout } from './components/layout/AppLayout';
 // Pages
 import { Login } from './pages/Login';
 import { Dashboard } from './pages/Dashboard';
-import { Clients } from './pages/Clients';
 import { Leads } from './pages/Leads';
-import { SalesPipeline } from './pages/SalesPipeline';
-import { Tasks } from './pages/Tasks';
-import { FollowUps } from './pages/FollowUps';
+import { TaskAndSchedule } from './pages/TaskAndSchedule';
+import { ProgressModule } from './pages/ProgressModule';
+import { ClientsManagement } from './pages/ClientsManagement';
+import { TeamManagement } from './pages/TeamManagement';
 import { FieldTracking } from './pages/FieldTracking';
-import { Analytics } from './pages/Analytics';
-import { Reports } from './pages/Reports';
 import { Notifications } from './pages/Notifications';
 import { Settings } from './pages/Settings';
 
@@ -53,16 +51,21 @@ export const App: React.FC = () => {
               }
             >
               <Route index element={<Dashboard />} />
-              <Route path="clients" element={<Clients />} />
               <Route path="leads" element={<Leads />} />
-              <Route path="pipeline" element={<SalesPipeline />} />
-              <Route path="tasks" element={<Tasks />} />
-              <Route path="followups" element={<FollowUps />} />
+              <Route path="schedule" element={<TaskAndSchedule />} />
+              <Route path="progress" element={<ProgressModule />} />
+              <Route path="clients" element={<ClientsManagement />} />
+              <Route path="team" element={<TeamManagement />} />
               <Route path="tracking" element={<FieldTracking />} />
-              <Route path="analytics" element={<Analytics />} />
-              <Route path="reports" element={<Reports />} />
               <Route path="notifications" element={<Notifications />} />
               <Route path="settings" element={<Settings />} />
+
+              {/* Legacy navigation redirects */}
+              <Route path="tasks" element={<Navigate to="/schedule?tab=meetings" replace />} />
+              <Route path="followups" element={<Navigate to="/schedule?tab=followups" replace />} />
+              <Route path="reports" element={<Navigate to="/schedule?tab=reports" replace />} />
+              <Route path="analytics" element={<Navigate to="/progress" replace />} />
+              <Route path="pipeline" element={<Navigate to="/leads" replace />} />
             </Route>
 
             <Route path="*" element={<Navigate to="/" replace />} />
@@ -74,4 +77,3 @@ export const App: React.FC = () => {
 };
 
 export default App;
-

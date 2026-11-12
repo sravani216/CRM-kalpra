@@ -54,11 +54,10 @@ export const Login: React.FC = () => {
   };
 
   const demoAccounts = [
-    { role: 'CEO', name: 'Rajesh Varma', email: 'ceo@kalpracrm.com', badge: 'bg-purple-100 text-purple-800' },
-    { role: 'Admin', name: 'Srija Mam', email: 'admin.srija@kalpracrm.com', badge: 'bg-blue-100 text-blue-800' },
-    { role: 'Manager', name: 'Arvind Kumar', email: 'manager@kalpracrm.com', badge: 'bg-emerald-100 text-emerald-800' },
-    { role: 'Sales Employee', name: 'Shivani Reddy', email: 'shivani@kalpracrm.com', badge: 'bg-teal-100 text-teal-800' },
-    { role: 'Sales Employee', name: 'Uday Kiran', email: 'uday@kalpracrm.com', badge: 'bg-sky-100 text-sky-800' },
+    { role: 'Marketing Employee (5 Modules)', name: 'Shivani Reddy', email: 'shivani@kalpracrm.com', badge: 'bg-emerald-100 text-emerald-800' },
+    { role: 'Marketing Head (3 Modules)', name: 'Srija Mam', email: 'admin.srija@kalpracrm.com', badge: 'bg-purple-100 text-purple-800' },
+    { role: 'CEO (Single Page Overview)', name: 'Rajesh Varma', email: 'ceo@kalpracrm.com', badge: 'bg-amber-100 text-amber-800' },
+    { role: 'Marketing Employee', name: 'Uday Kiran', email: 'uday@kalpracrm.com', badge: 'bg-sky-100 text-sky-800' },
   ];
 
   return (

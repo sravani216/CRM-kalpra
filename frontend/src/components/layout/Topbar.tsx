@@ -53,18 +53,20 @@ export const Topbar: React.FC<TopbarProps> = ({ isCollapsed }) => {
   // Compute breadcrumb / title
   const getPageInfo = () => {
     const path = location.pathname;
-    if (path === '/') return { title: 'Dashboard', crumb: 'Home' };
-    if (path.startsWith('/clients')) return { title: 'Client Management', crumb: 'Clients' };
-    if (path.startsWith('/leads')) return { title: 'Lead Management', crumb: 'Leads' };
-    if (path.startsWith('/pipeline')) return { title: 'Sales Pipeline', crumb: 'Pipeline' };
-    if (path.startsWith('/tasks')) return { title: 'Task Management', crumb: 'Tasks' };
-    if (path.startsWith('/followups')) return { title: 'Follow-up Center', crumb: 'Follow-ups' };
-    if (path.startsWith('/analytics')) return { title: 'Performance Analytics', crumb: 'Analytics' };
-    if (path.startsWith('/reports')) return { title: 'Reports & Exports', crumb: 'Reports' };
-    if (path.startsWith('/tracking')) return { title: 'Field Employee Tracking', crumb: 'Field Check-in' };
+    if (path === '/') {
+      if (user?.role === 'CEO') return { title: 'CEO Executive Command Center', crumb: 'Executive Portal' };
+      if (user?.role === 'ADMIN' || user?.role === 'MANAGER') return { title: 'Marketing Head Dashboard', crumb: 'Admin' };
+      return { title: 'Employee Workspace Dashboard', crumb: 'Employee' };
+    }
+    if (path.startsWith('/leads')) return { title: 'Lead Management (Module 2)', crumb: 'Leads' };
+    if (path.startsWith('/schedule')) return { title: 'Task & Schedule (Module 3)', crumb: 'Schedule' };
+    if (path.startsWith('/progress')) return { title: 'Progress & Growth Module (Module 4)', crumb: 'Progress' };
+    if (path.startsWith('/clients')) return { title: 'Clients Management & Deal Reports', crumb: 'Clients' };
+    if (path.startsWith('/team')) return { title: 'Team Management & Monitoring', crumb: 'Team' };
+    if (path.startsWith('/tracking')) return { title: 'Live GPS Field Tracking', crumb: 'Tracking' };
     if (path.startsWith('/notifications')) return { title: 'Notifications', crumb: 'Notifications' };
     if (path.startsWith('/settings')) return { title: 'System Settings', crumb: 'Settings' };
-    return { title: 'CRM Portal', crumb: 'Page' };
+    return { title: 'Kalpra Tech CRM', crumb: 'Portal' };
   };
 
   const { title, crumb } = getPageInfo();
@@ -83,10 +85,9 @@ export const Topbar: React.FC<TopbarProps> = ({ isCollapsed }) => {
   };
 
   const demoAccounts = [
-    { name: 'Rajesh Varma', role: 'CEO', email: 'ceo@kalpracrm.com', desc: 'Org Monitoring & Revenue' },
-    { name: 'Srija Mam', role: 'ADMIN', email: 'admin.srija@kalpracrm.com', desc: 'Acquisition & Lead Allocator' },
-    { name: 'Arvind Kumar', role: 'MANAGER', email: 'manager@kalpracrm.com', desc: 'Task Approval & Workload' },
-    { name: 'Shivani Reddy', role: 'EMPLOYEE', email: 'shivani@kalpracrm.com', desc: 'Sales Executive' },
+    { name: 'Shivani Reddy', role: 'EMPLOYEE', email: 'shivani@kalpracrm.com', desc: 'Marketing Employee (5 Modules)' },
+    { name: 'Srija Mam', role: 'ADMIN', email: 'admin.srija@kalpracrm.com', desc: 'Marketing Head (3 Modules)' },
+    { name: 'Rajesh Varma', role: 'CEO', email: 'ceo@kalpracrm.com', desc: 'CEO Single-Page Read-Only' },
     { name: 'Uday Kiran', role: 'EMPLOYEE', email: 'uday@kalpracrm.com', desc: 'Sales Specialist' },
   ];
 

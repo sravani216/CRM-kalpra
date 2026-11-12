@@ -9,6 +9,112 @@ export interface MockUser {
   designation?: string;
   department?: string;
   avatar?: string;
+  area?: string;
+}
+
+export interface MockReminder {
+  id: string;
+  userId: string;
+  title: string;
+  date: string; // YYYY-MM-DD
+  time: string; // HH:mm
+  category: 'MEETING' | 'TASK' | 'FOLLOWUP' | 'DEADLINE' | 'PERSONAL';
+  priority: 'LOW' | 'MEDIUM' | 'HIGH' | 'URGENT';
+  notes?: string;
+  isCompleted: boolean;
+  createdAt: string;
+}
+
+export interface MockNote {
+  id: string;
+  userId: string;
+  title: string;
+  content: string;
+  color: 'yellow' | 'purple' | 'green' | 'blue' | 'rose' | 'amber';
+  isPinned?: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface MockWorkReport {
+  id: string;
+  reportId: string;
+  employeeId: string;
+  employeeName: string;
+  employeeAvatar?: string;
+  employeeDesignation?: string;
+  title: string;
+  date: string;
+  summary: string;
+  meetingsConducted: number;
+  leadsContacted: number;
+  dealsProgressed: number;
+  revenueInfluenced: number;
+  challenges?: string;
+  attachmentName?: string;
+  attachmentSize?: string;
+  status: 'SUBMITTED' | 'REVIEWED' | 'ACKNOWLEDGED';
+  reviewedBy?: string;
+  reviewedAt?: string;
+  adminRemarks?: string;
+  createdAt: string;
+}
+
+export interface MockClientMeeting {
+  id: string;
+  clientId: string;
+  contactPerson: string;
+  designation: string;
+  companyName: string;
+  area: string;
+  contactNumber: string;
+  employeeId: string;
+  employeeName: string;
+  scheduledTime: string;
+  status: 'SCHEDULED' | 'IN_MEETING' | 'COMPLETED' | 'CANCELLED';
+  clientStatus: string;
+  meetingStartTime?: string;
+  meetingStopTime?: string;
+  durationMinutes?: number;
+  photoUrl?: string;
+  discussionNotes?: string;
+  createdAt: string;
+}
+
+export interface MockDealClosingReport {
+  id: string;
+  reportId: string;
+  clientId: string;
+  clientName: string;
+  organization: string;
+  contactPerson: string;
+  contactDesignation: string;
+  area: string;
+  dealTitle: string;
+  budgetAmount: number; // in INR
+  closedDate: string;
+  paymentMilestones: string;
+  scopeOfWork: string;
+  wonReason: string;
+  closedById: string;
+  closedByName: string;
+  createdAt: string;
+}
+
+export interface MockEmployeeLocation {
+  employeeId: string;
+  employeeName: string;
+  designation: string;
+  avatar: string;
+  currentArea: string;
+  city: string;
+  latitude: number;
+  longitude: number;
+  lastActive: string;
+  status: 'ON_FIELD' | 'IN_CLIENT_OFFICE' | 'TRANSIT' | 'OFFLINE';
+  currentClient?: string;
+  batteryLevel?: number;
+  lastPhotoUrl?: string;
 }
 
 export const INITIAL_USERS: MockUser[] = [
@@ -174,13 +280,19 @@ export const INITIAL_LEADS = [
     id: 'led-1',
     leadId: 'LED-2001',
     clientId: 'clt-1',
+    contactPerson: 'Vikram Malhotra',
+    designation: 'VP of Procurement',
+    companyName: 'Apex Global Logistics Pvt Ltd',
+    area: 'Hitec City, Hyderabad',
+    contactNumber: '+91 91234 56781',
     assignedToId: 'usr-shivani',
     createdById: 'usr-admin',
     priority: 'HIGH',
-    status: 'WON',
+    status: 'Won',
     requirement: 'Enterprise fleet dispatch CRM setup with 200 vehicle telematics.',
     dealValue: 750000,
     source: 'Cold Call',
+    notes: 'Met at Hitec City corporate office. Signed 200-vehicle telemetry agreement.',
     nextFollowupDate: null,
     createdAt: new Date(Date.now() - 28 * 86400000).toISOString(),
   },
@@ -188,13 +300,19 @@ export const INITIAL_LEADS = [
     id: 'led-2',
     leadId: 'LED-2002',
     clientId: 'clt-2',
+    contactPerson: 'Dr. Ananya Sen',
+    designation: 'Chief Medical Officer',
+    companyName: 'Zenith Healthtech Solutions',
+    area: 'Jubilee Hills, Hyderabad',
+    contactNumber: '+91 91234 56782',
     assignedToId: 'usr-uday',
     createdById: 'usr-admin',
     priority: 'HIGH',
-    status: 'WON',
+    status: 'Won',
     requirement: 'Tele-health CRM integration across 12 branch clinics.',
     dealValue: 520000,
     source: 'Website',
+    notes: 'Medical panel approved video consultation module. Contract executed.',
     nextFollowupDate: null,
     createdAt: new Date(Date.now() - 24 * 86400000).toISOString(),
   },
@@ -202,13 +320,19 @@ export const INITIAL_LEADS = [
     id: 'led-3',
     leadId: 'LED-2003',
     clientId: 'clt-3',
+    contactPerson: 'Rohan Mehra',
+    designation: 'Director of Wealth Management',
+    companyName: 'Nexus Financial Advisory Services',
+    area: 'Madhapur, Hyderabad',
+    contactNumber: '+91 91234 56783',
     assignedToId: 'usr-shivani',
     createdById: 'usr-admin',
     priority: 'HIGH',
-    status: 'NEGOTIATION',
+    status: 'Interested',
     requirement: 'Private wealth portfolio CRM with encrypted vault access.',
     dealValue: 1200000,
     source: 'Referral',
+    notes: 'Very interested in wealth advisory tracking. Legal vetting currently underway.',
     nextFollowupDate: new Date(Date.now() + 86400000).toISOString(),
     createdAt: new Date(Date.now() - 19 * 86400000).toISOString(),
   },
@@ -216,13 +340,19 @@ export const INITIAL_LEADS = [
     id: 'led-4',
     leadId: 'LED-2004',
     clientId: 'clt-4',
+    contactPerson: 'Pooja Agarwal',
+    designation: 'General Manager of Retail Ops',
+    companyName: 'BlueHorizon Retailers',
+    area: 'Banjara Hills, Hyderabad',
+    contactNumber: '+91 91234 56784',
     assignedToId: 'usr-uday',
     createdById: 'usr-admin',
     priority: 'MEDIUM',
-    status: 'PROPOSAL_SENT',
+    status: 'Proposal Sent',
     requirement: 'Retail customer loyalty app with POS point redemption API.',
     dealValue: 480000,
     source: 'Exhibition',
+    notes: 'Commercial quotation sent for 15 store branches. Reviewing discount terms.',
     nextFollowupDate: new Date(Date.now() + 2 * 86400000).toISOString(),
     createdAt: new Date(Date.now() - 14 * 86400000).toISOString(),
   },
@@ -230,13 +360,19 @@ export const INITIAL_LEADS = [
     id: 'led-5',
     leadId: 'LED-2005',
     clientId: 'clt-5',
+    contactPerson: 'Karthik Raja',
+    designation: 'Chief Technology Officer',
+    companyName: 'TechNova Cloud Technologies',
+    area: 'Gachibowli, Hyderabad',
+    contactNumber: '+91 91234 56785',
     assignedToId: 'usr-shivani',
     createdById: 'usr-admin',
     priority: 'HIGH',
-    status: 'DEMO_SCHEDULED',
+    status: 'Demo Scheduled',
     requirement: 'Custom sales lead forecasting dashboard and pipeline tracker.',
     dealValue: 350000,
     source: 'Social Media',
+    notes: 'Demo scheduled for tomorrow 10:30 AM with engineering leads.',
     nextFollowupDate: new Date(Date.now() + 86400000).toISOString(),
     createdAt: new Date(Date.now() - 9 * 86400000).toISOString(),
   },
@@ -244,13 +380,19 @@ export const INITIAL_LEADS = [
     id: 'led-6',
     leadId: 'LED-2006',
     clientId: 'clt-6',
+    contactPerson: 'Suresh Patil',
+    designation: 'Operations Head',
+    companyName: 'GreenAgro Agrochem',
+    area: 'Kondapur, Hyderabad',
+    contactNumber: '+91 91234 56786',
     assignedToId: 'usr-uday',
     createdById: 'usr-admin',
     priority: 'MEDIUM',
-    status: 'INTERESTED',
+    status: 'Interested',
     requirement: 'Dealer network management mobile CRM with offline GPS sync.',
     dealValue: 600000,
     source: 'Cold Call',
+    notes: 'Field reps need offline cache sync for remote warehouse hubs.',
     nextFollowupDate: new Date(Date.now() + 3 * 86400000).toISOString(),
     createdAt: new Date(Date.now() - 5 * 86400000).toISOString(),
   },
@@ -258,13 +400,19 @@ export const INITIAL_LEADS = [
     id: 'led-7',
     leadId: 'LED-2007',
     clientId: 'clt-1',
+    contactPerson: 'Sanjay Deshmukh',
+    designation: 'Fleet Maintenance Head',
+    companyName: 'Apex Global Logistics Pvt Ltd',
+    area: 'Hitec City, Hyderabad',
+    contactNumber: '+91 91234 56799',
     assignedToId: 'usr-shivani',
     createdById: 'usr-admin',
     priority: 'MEDIUM',
-    status: 'CONTACTED',
+    status: 'Contacted',
     requirement: 'Driver attendance and automated trip incentive module.',
     dealValue: 220000,
     source: 'Referral',
+    notes: 'Add-on module to existing enterprise subscription. Waiting for Q1 budget.',
     nextFollowupDate: new Date().toISOString(),
     createdAt: new Date(Date.now() - 3 * 86400000).toISOString(),
   },
@@ -272,13 +420,19 @@ export const INITIAL_LEADS = [
     id: 'led-8',
     leadId: 'LED-2008',
     clientId: 'clt-2',
+    contactPerson: 'Rajiv Nambiar',
+    designation: 'Branch Administrator',
+    companyName: 'Zenith Healthtech Solutions',
+    area: 'Jubilee Hills, Hyderabad',
+    contactNumber: '+91 91234 56777',
     assignedToId: 'usr-uday',
     createdById: 'usr-admin',
     priority: 'LOW',
-    status: 'ASSIGNED',
+    status: 'Contacted',
     requirement: 'SMS and WhatsApp reminder gateway for patient checkups.',
     dealValue: 180000,
     source: 'Website',
+    notes: 'Needs WhatsApp Business API rate card.',
     nextFollowupDate: new Date(Date.now() + 86400000).toISOString(),
     createdAt: new Date(Date.now() - 2 * 86400000).toISOString(),
   },
@@ -286,13 +440,19 @@ export const INITIAL_LEADS = [
     id: 'led-9',
     leadId: 'LED-2009',
     clientId: 'clt-3',
-    assignedToId: null,
+    contactPerson: 'Meera Iyer',
+    designation: 'Compliance Officer',
+    companyName: 'Nexus Financial Advisory Services',
+    area: 'Madhapur, Hyderabad',
+    contactNumber: '+91 91234 56766',
+    assignedToId: 'usr-shivani',
     createdById: 'usr-admin',
     priority: 'HIGH',
-    status: 'NEW_LEAD',
+    status: 'Interested',
     requirement: 'Compliance auditing module for wealth manager interactions.',
     dealValue: 450000,
     source: 'Referral',
+    notes: 'Requires daily tamper-proof audit export log.',
     nextFollowupDate: null,
     createdAt: new Date(Date.now() - 86400000).toISOString(),
   },
@@ -300,13 +460,19 @@ export const INITIAL_LEADS = [
     id: 'led-10',
     leadId: 'LED-2010',
     clientId: 'clt-4',
+    contactPerson: 'Harish Rao',
+    designation: 'Regional Store Manager',
+    companyName: 'BlueHorizon Retailers',
+    area: 'Begumpet, Hyderabad',
+    contactNumber: '+91 91234 56755',
     assignedToId: 'usr-shivani',
     createdById: 'usr-admin',
     priority: 'LOW',
-    status: 'LOST',
-    statusReason: 'Client chose internal IT team build due to strict budget cap.',
+    status: 'Not Interested',
+    requirement: 'Store inventory barcode sync with CRM loyalty profiles.',
     dealValue: 250000,
     source: 'Exhibition',
+    notes: 'Client chose internal legacy software due to tight CapEx budget.',
     nextFollowupDate: null,
     createdAt: new Date(Date.now() - 12 * 86400000).toISOString(),
   },
@@ -433,13 +599,19 @@ export const INITIAL_FOLLOWUPS = [
     followupId: 'FLW-4001',
     title: 'Commercial Terms Review with CFO',
     clientId: 'clt-3',
+    clientName: 'Rohan Mehra',
+    designation: 'Director of Wealth Management',
+    companyName: 'Nexus Financial Advisory Services',
+    area: 'Madhapur, Hyderabad',
+    contact: '+91 91234 56783',
     leadId: 'led-3',
     assignedToId: 'usr-shivani',
     createdById: 'usr-shivani',
     scheduledAt: new Date(Date.now() + 86400000).toISOString(),
     type: 'MEETING',
-    status: 'SCHEDULED',
-    notes: 'Finalizing annual license discount and payment milestone breakdown.',
+    status: 'Interested',
+    customStatusText: '',
+    notes: 'Finalizing annual license discount and payment milestone breakdown. CFO wants multi-branch tier pricing.',
     createdAt: new Date(Date.now() - 2 * 86400000).toISOString(),
   },
   {
@@ -447,13 +619,19 @@ export const INITIAL_FOLLOWUPS = [
     followupId: 'FLW-4002',
     title: 'Proposal Follow-up Call with Marketing VP',
     clientId: 'clt-4',
+    clientName: 'Pooja Agarwal',
+    designation: 'General Manager of Retail Ops',
+    companyName: 'BlueHorizon Retailers',
+    area: 'Banjara Hills, Hyderabad',
+    contact: '+91 91234 56784',
     leadId: 'led-4',
     assignedToId: 'usr-uday',
     createdById: 'usr-uday',
     scheduledAt: new Date(Date.now() + 2 * 86400000).toISOString(),
     type: 'CALL',
-    status: 'SCHEDULED',
-    notes: 'Confirm if Pooja Agarwal received the quotation document sent yesterday.',
+    status: 'Proposal Follow-up',
+    customStatusText: '',
+    notes: 'Confirm if Pooja Agarwal received the quotation document sent yesterday. Reviewing POS integration fee.',
     createdAt: new Date(Date.now() - 86400000).toISOString(),
   },
   {
@@ -461,12 +639,18 @@ export const INITIAL_FOLLOWUPS = [
     followupId: 'FLW-4003',
     title: 'Product Demonstration Session',
     clientId: 'clt-5',
+    clientName: 'Karthik Raja',
+    designation: 'Chief Technology Officer',
+    companyName: 'TechNova Cloud Technologies',
+    area: 'Gachibowli, Hyderabad',
+    contact: '+91 91234 56785',
     leadId: 'led-5',
     assignedToId: 'usr-shivani',
     createdById: 'usr-shivani',
     scheduledAt: new Date(Date.now() + 86400000).toISOString(),
     type: 'DEMO',
-    status: 'SCHEDULED',
+    status: 'Demo Scheduled',
+    customStatusText: '',
     notes: 'Present automated sales workflow and CRM lead scoring system to Karthik Raja.',
     createdAt: new Date(Date.now() - 86400000).toISOString(),
   },
@@ -475,13 +659,19 @@ export const INITIAL_FOLLOWUPS = [
     followupId: 'FLW-4004',
     title: 'Overdue Contract Signature Follow-up',
     clientId: 'clt-1',
+    clientName: 'Vikram Malhotra',
+    designation: 'VP of Procurement',
+    companyName: 'Apex Global Logistics Pvt Ltd',
+    area: 'Hitec City, Hyderabad',
+    contact: '+91 91234 56781',
     leadId: 'led-7',
     assignedToId: 'usr-shivani',
     createdById: 'usr-shivani',
     scheduledAt: new Date(Date.now() - 86400000).toISOString(),
     type: 'CALL',
-    status: 'OVERDUE',
-    notes: 'Follow-up regarding driver tracking add-on agreement.',
+    status: 'Interested',
+    customStatusText: '',
+    notes: 'Follow-up regarding driver tracking add-on agreement. Client approved contract budget.',
     createdAt: new Date(Date.now() - 3 * 86400000).toISOString(),
   },
   {
@@ -489,16 +679,62 @@ export const INITIAL_FOLLOWUPS = [
     followupId: 'FLW-4005',
     title: 'Quarterly Check-in on Pilot Performance',
     clientId: 'clt-2',
+    clientName: 'Dr. Ananya Sen',
+    designation: 'Chief Medical Officer',
+    companyName: 'Zenith Healthtech Solutions',
+    area: 'Jubilee Hills, Hyderabad',
+    contact: '+91 91234 56782',
     leadId: 'led-2',
     assignedToId: 'usr-uday',
     createdById: 'usr-uday',
     scheduledAt: new Date(Date.now() - 10 * 86400000).toISOString(),
     type: 'MEETING',
-    status: 'COMPLETED',
+    status: 'Interested',
+    customStatusText: '',
     outcome: 'POSITIVE',
     clientResponse: 'Dr. Sen expressed great satisfaction with 99.8% uptime during the launch phase.',
     discussionNotes: 'Discussed potential expansion into their newly acquired Pune hospital branch in Q3.',
     createdAt: new Date(Date.now() - 15 * 86400000).toISOString(),
+  },
+  {
+    id: 'flw-6',
+    followupId: 'FLW-4006',
+    title: 'Enterprise ERP Integration Discussion',
+    clientId: 'clt-6',
+    clientName: 'Suresh Patil',
+    designation: 'Operations Head',
+    companyName: 'GreenAgro Agrochem',
+    area: 'Kondapur, Hyderabad',
+    contact: '+91 91234 56786',
+    leadId: 'led-6',
+    assignedToId: 'usr-shivani',
+    createdById: 'usr-shivani',
+    scheduledAt: new Date(Date.now() + 3 * 86400000).toISOString(),
+    type: 'CALL',
+    status: 'Call Back Later',
+    customStatusText: '',
+    notes: 'Managing director is traveling until Monday. Call back after 2 PM on Tuesday.',
+    createdAt: new Date().toISOString(),
+  },
+  {
+    id: 'flw-7',
+    followupId: 'FLW-4007',
+    title: 'Custom Compliance Security Review',
+    clientId: 'clt-3',
+    clientName: 'Meera Iyer',
+    designation: 'Compliance Officer',
+    companyName: 'Nexus Financial Advisory Services',
+    area: 'Madhapur, Hyderabad',
+    contact: '+91 91234 56766',
+    leadId: 'led-9',
+    assignedToId: 'usr-shivani',
+    createdById: 'usr-shivani',
+    scheduledAt: new Date(Date.now() + 4 * 86400000).toISOString(),
+    type: 'MEETING',
+    status: 'Other',
+    customStatusText: 'Awaiting Board Legal Clearance',
+    notes: 'Special clause review requested by legal board member.',
+    createdAt: new Date().toISOString(),
   },
 ];
 
@@ -582,3 +818,376 @@ export const INITIAL_NOTIFICATIONS = [
     createdAt: new Date().toISOString(),
   },
 ];
+
+// 1. Reminders for Calendar (Module 1a)
+export const INITIAL_REMINDERS: MockReminder[] = [
+  {
+    id: 'rem-1',
+    userId: 'usr-shivani',
+    title: 'Client Meeting with Vikram Malhotra (Apex Logistics)',
+    date: new Date().toISOString().split('T')[0],
+    time: '11:00',
+    category: 'MEETING',
+    priority: 'HIGH',
+    notes: 'Walkthrough fleet dispatch telemetry APIs and sign-off SLA terms.',
+    isCompleted: false,
+    createdAt: new Date(Date.now() - 86400000).toISOString(),
+  },
+  {
+    id: 'rem-2',
+    userId: 'usr-shivani',
+    title: 'Follow-up call with Dr. Ananya Sen',
+    date: new Date().toISOString().split('T')[0],
+    time: '14:30',
+    category: 'FOLLOWUP',
+    priority: 'MEDIUM',
+    notes: 'Confirm pilot expansion date for Indiranagar branch.',
+    isCompleted: false,
+    createdAt: new Date(Date.now() - 86400000).toISOString(),
+  },
+  {
+    id: 'rem-3',
+    userId: 'usr-shivani',
+    title: 'Submit Daily Field & Work Status Report',
+    date: new Date().toISOString().split('T')[0],
+    time: '18:00',
+    category: 'TASK',
+    priority: 'HIGH',
+    notes: 'Upload compiled client visits & progress report for Marketing Head & CEO review.',
+    isCompleted: false,
+    createdAt: new Date(Date.now() - 86400000).toISOString(),
+  },
+  {
+    id: 'rem-4',
+    userId: 'usr-shivani',
+    title: 'Prepare Quotation for Nexus FinServ Private Banking',
+    date: new Date(Date.now() + 86400000).toISOString().split('T')[0],
+    time: '10:00',
+    category: 'DEADLINE',
+    priority: 'URGENT',
+    notes: 'Include ISO 27001 compliance annexure and milestone pricing table.',
+    isCompleted: false,
+    createdAt: new Date().toISOString(),
+  },
+  {
+    id: 'rem-5',
+    userId: 'usr-admin',
+    title: 'Review Q4 Marketing Lead Pipeline with CEO',
+    date: new Date().toISOString().split('T')[0],
+    time: '16:00',
+    category: 'MEETING',
+    priority: 'HIGH',
+    notes: 'Present deal closing metrics and revenue contributions.',
+    isCompleted: false,
+    createdAt: new Date().toISOString(),
+  },
+  {
+    id: 'rem-6',
+    userId: 'usr-admin',
+    title: 'Finalize Deal Closing Report for Apex Global Logistics',
+    date: new Date().toISOString().split('T')[0],
+    time: '12:30',
+    category: 'DEADLINE',
+    priority: 'URGENT',
+    notes: 'Attach signed budget agreement of Rs. 7,50,000.',
+    isCompleted: true,
+    createdAt: new Date().toISOString(),
+  },
+];
+
+// 2. Personal Thoughts & Process Notes (Module 1c)
+export const INITIAL_NOTES: MockNote[] = [
+  {
+    id: 'note-1',
+    userId: 'usr-shivani',
+    title: 'Apex Logistics Pitch Key Learnings',
+    content: 'Client CFO is extremely sensitive to downtime penalties. Highlight our 99.95% SLA and automatic failover in the SLA clause. Vikram loved the driver attendance dashboard view.',
+    color: 'yellow',
+    isPinned: true,
+    createdAt: new Date(Date.now() - 2 * 86400000).toISOString(),
+    updatedAt: new Date(Date.now() - 86400000).toISOString(),
+  },
+  {
+    id: 'note-2',
+    userId: 'usr-shivani',
+    title: 'Ideas for Healthcare Tele-consultation Pitch',
+    content: 'Doctors at Zenith preferred 1-click WhatsApp reminder triggers over SMS. Bring up our automated WhatsApp template integrations during the next demo on Friday.',
+    color: 'purple',
+    isPinned: false,
+    createdAt: new Date(Date.now() - 4 * 86400000).toISOString(),
+    updatedAt: new Date(Date.now() - 3 * 86400000).toISOString(),
+  },
+  {
+    id: 'note-3',
+    userId: 'usr-shivani',
+    title: 'Daily Process Dump: Friday Follow-up Cadence',
+    content: '1. Check new leads assigned by Srija Mam\n2. Call 3 warm leads in Hitec City area\n3. Start meeting stopwatch right when stepping into client office\n4. Take entrance/reception photo for geo-verification\n5. Submit evening report before 6:30 PM',
+    color: 'green',
+    isPinned: true,
+    createdAt: new Date(Date.now() - 86400000).toISOString(),
+    updatedAt: new Date().toISOString(),
+  },
+  {
+    id: 'note-4',
+    userId: 'usr-admin',
+    title: 'Q4 Enterprise Target Strategy & Incentive Plan',
+    content: 'Targeting Rs. 50 Lakhs revenue this quarter. Focus on Hitec City tech corridors and logistics hubs in Shamshabad. Ensure all team members upload field photos and submit daily work reports.',
+    color: 'blue',
+    isPinned: true,
+    createdAt: new Date(Date.now() - 5 * 86400000).toISOString(),
+    updatedAt: new Date(Date.now() - 86400000).toISOString(),
+  },
+  {
+    id: 'note-5',
+    userId: 'usr-admin',
+    title: 'Client Retention & Deal Closing Checklist',
+    content: 'Prioritize clients with budget over 5L. When closing deal, verify payment milestones: 40% advance, 40% UAT signoff, 20% annual maintenance.',
+    color: 'rose',
+    isPinned: false,
+    createdAt: new Date(Date.now() - 3 * 86400000).toISOString(),
+    updatedAt: new Date().toISOString(),
+  },
+];
+
+// 3. Client Meetings for Task & Schedule (Module 3 Box 1)
+export const INITIAL_CLIENT_MEETINGS: MockClientMeeting[] = [
+  {
+    id: 'mtg-1',
+    clientId: 'clt-1',
+    contactPerson: 'Vikram Malhotra',
+    designation: 'VP of Procurement & Fleet Operations',
+    companyName: 'Apex Global Logistics Pvt Ltd',
+    area: 'Hitec City, Hyderabad',
+    contactNumber: '+91 91234 56781',
+    employeeId: 'usr-shivani',
+    employeeName: 'Shivani Reddy',
+    scheduledTime: 'Today, 11:30 AM',
+    status: 'COMPLETED',
+    clientStatus: 'Closed Won',
+    meetingStartTime: new Date(Date.now() - 3 * 3600000).toISOString(),
+    meetingStopTime: new Date(Date.now() - 2 * 3600000).toISOString(),
+    durationMinutes: 58,
+    photoUrl: 'https://images.unsplash.com/photo-1577495508048-b635879837f1?w=800&auto=format&fit=crop&q=80',
+    discussionNotes: 'Reviewed SLA agreement. Client signed enterprise contract for 200 fleet vehicles.',
+    createdAt: new Date(Date.now() - 86400000).toISOString(),
+  },
+  {
+    id: 'mtg-2',
+    clientId: 'clt-3',
+    contactPerson: 'Rohan Mehra',
+    designation: 'Director of Wealth Management',
+    companyName: 'Nexus Financial Advisory Services',
+    area: 'Madhapur, Hyderabad',
+    contactNumber: '+91 91234 56783',
+    employeeId: 'usr-shivani',
+    employeeName: 'Shivani Reddy',
+    scheduledTime: 'Today, 03:00 PM',
+    status: 'SCHEDULED',
+    clientStatus: 'In Negotiation',
+    photoUrl: 'https://images.unsplash.com/photo-1497366216548-37526070297c?w=800&auto=format&fit=crop&q=80',
+    discussionNotes: 'Walkthrough data encryption vault and multi-branch advisor access tiers.',
+    createdAt: new Date().toISOString(),
+  },
+  {
+    id: 'mtg-3',
+    clientId: 'clt-5',
+    contactPerson: 'Karthik Raja',
+    designation: 'Chief Technology Officer',
+    companyName: 'TechNova Cloud Technologies',
+    area: 'Gachibowli, Hyderabad',
+    contactNumber: '+91 91234 56785',
+    employeeId: 'usr-shivani',
+    employeeName: 'Shivani Reddy',
+    scheduledTime: 'Tomorrow, 10:30 AM',
+    status: 'SCHEDULED',
+    clientStatus: 'Demo Scheduled',
+    discussionNotes: 'Product demo for lead scoring engine and automated Webhook integrations.',
+    createdAt: new Date().toISOString(),
+  },
+  {
+    id: 'mtg-4',
+    clientId: 'clt-2',
+    contactPerson: 'Dr. Ananya Sen',
+    designation: 'Head of Clinical Informatics',
+    companyName: 'Zenith Healthtech Solutions',
+    area: 'Jubilee Hills, Hyderabad',
+    contactNumber: '+91 91234 56782',
+    employeeId: 'usr-uday',
+    employeeName: 'Uday Kiran',
+    scheduledTime: 'Yesterday, 02:00 PM',
+    status: 'COMPLETED',
+    clientStatus: 'Closed Won',
+    meetingStartTime: new Date(Date.now() - 26 * 3600000).toISOString(),
+    meetingStopTime: new Date(Date.now() - 25 * 3600000).toISOString(),
+    durationMinutes: 65,
+    photoUrl: 'https://images.unsplash.com/photo-1519494026892-80bbd2d6fd0d?w=800&auto=format&fit=crop&q=80',
+    discussionNotes: 'Completed clinical demo. Approved by senior medical committee.',
+    createdAt: new Date(Date.now() - 2 * 86400000).toISOString(),
+  },
+  {
+    id: 'mtg-5',
+    clientId: 'clt-4',
+    contactPerson: 'Pooja Agarwal',
+    designation: 'General Manager of Retail Ops',
+    companyName: 'BlueHorizon Retailers',
+    area: 'Banjara Hills, Hyderabad',
+    contactNumber: '+91 91234 56784',
+    employeeId: 'usr-uday',
+    employeeName: 'Uday Kiran',
+    scheduledTime: 'Today, 04:30 PM',
+    status: 'SCHEDULED',
+    clientStatus: 'Proposal Sent',
+    discussionNotes: 'Review loyalty reward point tiers across 15 store branches.',
+    createdAt: new Date().toISOString(),
+  },
+];
+
+// 4. Work Status Reports (Module 3 Box 3) - Reflects on Admin & CEO Dashboard!
+export const INITIAL_WORK_REPORTS: MockWorkReport[] = [
+  {
+    id: 'rep-1',
+    reportId: 'REP-101',
+    employeeId: 'usr-shivani',
+    employeeName: 'Shivani Reddy',
+    employeeAvatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80',
+    employeeDesignation: 'Marketing & Sales Executive',
+    title: 'Daily Field Operations & Apex Logistics Contract Sign-off',
+    date: new Date().toISOString().split('T')[0],
+    summary: 'Conducted 2 on-site client meetings in Hitec City. Successfully secured verbal and signed confirmation for the Apex Global Logistics enterprise deal (Budget: Rs. 7,50,000). Followed up with Nexus FinServ legal team on NDA clauses.',
+    meetingsConducted: 2,
+    leadsContacted: 5,
+    dealsProgressed: 2,
+    revenueInfluenced: 750000,
+    challenges: 'Nexus legal requested 2 minor amendments in data storage jurisdiction clause.',
+    attachmentName: 'Apex_Signed_SLA_Summary.pdf',
+    attachmentSize: '2.4 MB',
+    status: 'REVIEWED',
+    reviewedBy: 'Srija Mam (Marketing Head)',
+    reviewedAt: new Date(Date.now() - 3600000).toISOString(),
+    adminRemarks: 'Outstanding work on closing Apex Logistics! Contract acknowledged and escalated to CEO for ledger approval.',
+    createdAt: new Date(Date.now() - 5400000).toISOString(),
+  },
+  {
+    id: 'rep-2',
+    reportId: 'REP-102',
+    employeeId: 'usr-uday',
+    employeeName: 'Uday Kiran',
+    employeeAvatar: 'https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=150&auto=format&fit=crop&q=80',
+    employeeDesignation: 'Senior Sales Specialist',
+    title: 'Zenith Healthtech Pilot Review & BlueHorizon Proposal',
+    date: new Date(Date.now() - 86400000).toISOString().split('T')[0],
+    summary: 'Visited Zenith Healthtech in Jubilee Hills. Completed physician feedback round with 98% positive rating. Submitted commercial proposal to BlueHorizon Retailers for 15 store locations.',
+    meetingsConducted: 1,
+    leadsContacted: 4,
+    dealsProgressed: 1,
+    revenueInfluenced: 520000,
+    challenges: 'BlueHorizon GM asked for a 5% volume concession on hardware scanner integration.',
+    attachmentName: 'Zenith_Physician_Feedback_Deck.pdf',
+    attachmentSize: '4.1 MB',
+    status: 'ACKNOWLEDGED',
+    reviewedBy: 'Srija Mam (Marketing Head)',
+    reviewedAt: new Date(Date.now() - 86400000).toISOString(),
+    adminRemarks: 'Good progress. We can approve the 5% concession if they sign a 2-year commitment.',
+    createdAt: new Date(Date.now() - 90000000).toISOString(),
+  },
+  {
+    id: 'rep-3',
+    reportId: 'REP-103',
+    employeeId: 'usr-shivani',
+    employeeName: 'Shivani Reddy',
+    employeeAvatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80',
+    employeeDesignation: 'Marketing & Sales Executive',
+    title: 'TechNova Cloud Technologies Demo Preparation & Lead Generation',
+    date: new Date(Date.now() - 2 * 86400000).toISOString().split('T')[0],
+    summary: 'Reached out to 6 new software exporters in Gachibowli financial district. Scheduled high-priority product demo with TechNova CTO Karthik Raja for tomorrow.',
+    meetingsConducted: 1,
+    leadsContacted: 6,
+    dealsProgressed: 1,
+    revenueInfluenced: 350000,
+    challenges: 'None. Pipeline momentum is very high.',
+    attachmentName: 'Gachibowli_TechCorridor_Leads.xlsx',
+    attachmentSize: '1.1 MB',
+    status: 'REVIEWED',
+    reviewedBy: 'Srija Mam (Marketing Head)',
+    reviewedAt: new Date(Date.now() - 2 * 86400000).toISOString(),
+    adminRemarks: 'Keep pushing on TechNova. They have 4 sister companies who could also use our platform.',
+    createdAt: new Date(Date.now() - 2 * 86400000).toISOString(),
+  },
+];
+
+// 5. Deal Closing Reports Generated by Marketing Head (Admin Module 2)
+export const INITIAL_DEAL_CLOSING_REPORTS: MockDealClosingReport[] = [
+  {
+    id: 'dcr-1',
+    reportId: 'DCR-2026-001',
+    clientId: 'clt-1',
+    clientName: 'Apex Global Logistics Pvt Ltd',
+    organization: 'Apex Logistics Group',
+    contactPerson: 'Vikram Malhotra',
+    contactDesignation: 'VP of Procurement',
+    area: 'Hitec City, Hyderabad',
+    dealTitle: 'Enterprise Fleet Dispatch & Telemetry Management System',
+    budgetAmount: 750000,
+    closedDate: new Date(Date.now() - 2 * 86400000).toISOString().split('T')[0],
+    paymentMilestones: '50% Advance on Agreement (Rs. 3,75,000), 30% Post-UAT deployment, 20% on Annual Go-Live certification.',
+    scopeOfWork: 'End-to-end telemetry integration for 200 fleet trucks, driver mobile dispatch app, dispatch officer web CRM, live route optimization.',
+    wonReason: 'Superior live mapping accuracy and specialized vehicle health telemetry alerting compared to competitor bids.',
+    closedById: 'usr-admin',
+    closedByName: 'Srija Mam',
+    createdAt: new Date(Date.now() - 2 * 86400000).toISOString(),
+  },
+  {
+    id: 'dcr-2',
+    reportId: 'DCR-2026-002',
+    clientId: 'clt-2',
+    clientName: 'Zenith Healthtech Solutions',
+    organization: 'Zenith Group',
+    contactPerson: 'Dr. Ananya Sen',
+    contactDesignation: 'Chief Medical Officer',
+    area: 'Jubilee Hills, Hyderabad',
+    dealTitle: 'Multi-Clinic Tele-consultation & Patient Relationship CRM',
+    budgetAmount: 520000,
+    closedDate: new Date(Date.now() - 10 * 86400000).toISOString().split('T')[0],
+    paymentMilestones: '40% Advance on Contract Signing, 40% on Pilot Clinic Rollout, 20% on Full Network Launch.',
+    scopeOfWork: 'Secure video consultation room, automated WhatsApp reminder notifications, prescription generation PDF module.',
+    wonReason: 'High physician satisfaction rating during live demonstration and strict HIPAA-compliant data encryption.',
+    closedById: 'usr-admin',
+    closedByName: 'Srija Mam',
+    createdAt: new Date(Date.now() - 10 * 86400000).toISOString(),
+  },
+];
+
+// 6. Live Employee GPS Tracking & Location Status (Extra Feature)
+export const INITIAL_EMPLOYEE_LOCATIONS: MockEmployeeLocation[] = [
+  {
+    employeeId: 'usr-shivani',
+    employeeName: 'Shivani Reddy',
+    designation: 'Marketing & Sales Executive',
+    avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80',
+    currentArea: 'Hitec City, Cyber Towers Junction',
+    city: 'Hyderabad',
+    latitude: 17.4504,
+    longitude: 78.3808,
+    lastActive: '5 minutes ago',
+    status: 'IN_CLIENT_OFFICE',
+    currentClient: 'Apex Global Logistics Pvt Ltd',
+    batteryLevel: 86,
+    lastPhotoUrl: 'https://images.unsplash.com/photo-1577495508048-b635879837f1?w=800&auto=format&fit=crop&q=80',
+  },
+  {
+    employeeId: 'usr-uday',
+    employeeName: 'Uday Kiran',
+    designation: 'Senior Sales Specialist',
+    avatar: 'https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=150&auto=format&fit=crop&q=80',
+    currentArea: 'Jubilee Hills, Road No. 36',
+    city: 'Hyderabad',
+    latitude: 17.4319,
+    longitude: 78.4073,
+    lastActive: '18 minutes ago',
+    status: 'ON_FIELD',
+    currentClient: 'Zenith Healthtech Solutions',
+    batteryLevel: 72,
+    lastPhotoUrl: 'https://images.unsplash.com/photo-1519494026892-80bbd2d6fd0d?w=800&auto=format&fit=crop&q=80',
+  },
+];
+

@@ -6,6 +6,12 @@ import {
   INITIAL_FOLLOWUPS,
   INITIAL_CHECKINS,
   INITIAL_NOTIFICATIONS,
+  INITIAL_REMINDERS,
+  INITIAL_NOTES,
+  INITIAL_WORK_REPORTS,
+  INITIAL_DEAL_CLOSING_REPORTS,
+  INITIAL_CLIENT_MEETINGS,
+  INITIAL_EMPLOYEE_LOCATIONS,
   MockUser,
 } from './mockData';
 
@@ -35,6 +41,12 @@ class MockDatabase {
   followups: any[] = getStored('followups', INITIAL_FOLLOWUPS);
   checkins: any[] = getStored('checkins', INITIAL_CHECKINS);
   notifications: any[] = getStored('notifications', INITIAL_NOTIFICATIONS);
+  reminders: any[] = getStored('reminders', INITIAL_REMINDERS);
+  notes: any[] = getStored('notes', INITIAL_NOTES);
+  workReports: any[] = getStored('workReports', INITIAL_WORK_REPORTS);
+  dealReports: any[] = getStored('dealReports', INITIAL_DEAL_CLOSING_REPORTS);
+  clientMeetings: any[] = getStored('clientMeetings', INITIAL_CLIENT_MEETINGS);
+  employeeLocations: any[] = getStored('employeeLocations', INITIAL_EMPLOYEE_LOCATIONS);
 
   save() {
     setStored('users', this.users);
@@ -44,6 +56,12 @@ class MockDatabase {
     setStored('followups', this.followups);
     setStored('checkins', this.checkins);
     setStored('notifications', this.notifications);
+    setStored('reminders', this.reminders);
+    setStored('notes', this.notes);
+    setStored('workReports', this.workReports);
+    setStored('dealReports', this.dealReports);
+    setStored('clientMeetings', this.clientMeetings);
+    setStored('employeeLocations', this.employeeLocations);
   }
 
   getCurrentUser(): MockUser {
@@ -405,16 +423,47 @@ export async function handleMockRequest(
 
     if (method === 'POST') {
       const nextNum = 2000 + mockDb.leads.length + 1;
+      let clientId = data.clientId;
+
+      // If new company name provided and no existing client selected, auto-register client
+      if (!clientId && data.companyName) {
+        const newClient = {
+          id: 'clt-' + Date.now(),
+          clientId: 'CLT-' + (1000 + mockDb.clients.length + 1),
+          name: data.companyName,
+          organization: data.companyName,
+          contactPerson: data.contactPerson || 'Client Contact',
+          phone: data.contactNumber || data.phone || '+91 90000 00000',
+          email: data.email || `${data.companyName.toLowerCase().replace(/[^a-z]/g, '')}@example.com`,
+          location: data.area || 'Hyderabad',
+          industry: data.industry || 'Technology & Services',
+          requirement: data.requirement || '',
+          source: data.source || 'Website',
+          status: 'ACTIVE',
+          notes: data.notes || '',
+          createdAt: new Date().toISOString(),
+          createdById: currentUser.id,
+        };
+        mockDb.clients.unshift(newClient);
+        clientId = newClient.id;
+      }
+
       const newLead = {
         id: 'led-' + Date.now(),
         leadId: 'LED-' + nextNum,
-        clientId: data.clientId,
-        assignedToId: data.assignedToId || null,
+        clientId: clientId || mockDb.clients[0]?.id,
+        contactPerson: data.contactPerson || (data.name ? data.name : 'Lead Person'),
+        designation: data.designation || 'Manager',
+        companyName: data.companyName || mockDb.clients.find((c) => c.id === clientId)?.name || 'Company',
+        area: data.area || 'Hitec City, Hyderabad',
+        contactNumber: data.contactNumber || data.phone || '+91 90000 00000',
+        assignedToId: data.assignedToId || currentUser.id,
         priority: data.priority || 'MEDIUM',
-        status: data.assignedToId ? 'ASSIGNED' : 'NEW_LEAD',
-        requirement: data.requirement,
-        dealValue: Number(data.dealValue) || 0,
-        source: data.source || 'Website',
+        status: data.status || 'Interested',
+        requirement: data.requirement || 'CRM & Software Solutions',
+        dealValue: Number(data.dealValue || data.expectedValue) || 300000,
+        source: data.source || 'Direct',
+        notes: data.notes || '',
         nextFollowupDate: data.nextFollowupDate || null,
         createdById: currentUser.id,
         createdAt: new Date().toISOString(),
@@ -823,6 +872,412 @@ export async function handleMockRequest(
         'https://images.unsplash.com/photo-1497366216548-37526070297c?w=800&auto=format&fit=crop&q=80',
       filename: 'uploaded_evidence.jpg',
     };
+  }
+
+  // 13. CALENDAR TASK REMINDERS (Module 1a)
+  if (cleanEndpoint === '/reminders') {
+    if (method === 'GET') {
+      const userId = params?.userId || currentUser.id;
+      // Admin and CEO can see all or filter, Employee sees own
+      let filtered = mockDb.reminders;
+      if (currentUser.role === 'EMPLOYEE' || params?.userId) {
+        filtered = filtered.filter((r) => r.userId === userId);
+      }
+      return { success: true, data: filtered };
+    }
+
+    if (method === 'POST') {
+      const newReminder = {
+        id: 'rem-' + Date.now(),
+        userId: data?.userId || currentUser.id,
+        title: data?.title || 'Reminder',
+        date: data?.date || new Date().toISOString().split('T')[0],
+        time: data?.time || '10:00',
+        category: data?.category || 'TASK',
+        priority: data?.priority || 'MEDIUM',
+        notes: data?.notes || '',
+        isCompleted: false,
+        createdAt: new Date().toISOString(),
+      };
+      mockDb.reminders.unshift(newReminder);
+      mockDb.save();
+      return { success: true, data: newReminder, message: 'Reminder created successfully' };
+    }
+  }
+
+  if (cleanEndpoint.startsWith('/reminders/') && cleanEndpoint.endsWith('/toggle') && method === 'PATCH') {
+    const id = cleanEndpoint.replace('/reminders/', '').replace('/toggle', '');
+    const reminder = mockDb.reminders.find((r) => r.id === id);
+    if (reminder) {
+      reminder.isCompleted = !reminder.isCompleted;
+      mockDb.save();
+      return { success: true, data: reminder };
+    }
+    return { success: false, message: 'Reminder not found' };
+  }
+
+  if (cleanEndpoint.startsWith('/reminders/') && method === 'DELETE') {
+    const id = cleanEndpoint.replace('/reminders/', '');
+    mockDb.reminders = mockDb.reminders.filter((r) => r.id !== id);
+    mockDb.save();
+    return { success: true, message: 'Reminder deleted' };
+  }
+
+  // 14. PERSONAL & STRATEGIC NOTES (Module 1c)
+  if (cleanEndpoint === '/notes') {
+    if (method === 'GET') {
+      const userId = params?.userId || currentUser.id;
+      const userNotes = mockDb.notes.filter((n) => n.userId === userId);
+      userNotes.sort((a, b) => {
+        if (a.isPinned && !b.isPinned) return -1;
+        if (!a.isPinned && b.isPinned) return 1;
+        return new Date(b.updatedAt || b.createdAt).getTime() - new Date(a.updatedAt || a.createdAt).getTime();
+      });
+      return { success: true, data: userNotes };
+    }
+
+    if (method === 'POST') {
+      const newNote = {
+        id: 'note-' + Date.now(),
+        userId: currentUser.id,
+        title: data?.title || 'Untitled Thought',
+        content: data?.content || '',
+        color: data?.color || 'yellow',
+        isPinned: !!data?.isPinned,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      };
+      mockDb.notes.unshift(newNote);
+      mockDb.save();
+      return { success: true, data: newNote, message: 'Note saved' };
+    }
+  }
+
+  if (cleanEndpoint.startsWith('/notes/') && method === 'PUT') {
+    const id = cleanEndpoint.replace('/notes/', '');
+    const note = mockDb.notes.find((n) => n.id === id);
+    if (note) {
+      note.title = data?.title ?? note.title;
+      note.content = data?.content ?? note.content;
+      note.color = data?.color ?? note.color;
+      note.isPinned = data?.isPinned ?? note.isPinned;
+      note.updatedAt = new Date().toISOString();
+      mockDb.save();
+      return { success: true, data: note };
+    }
+    return { success: false, message: 'Note not found' };
+  }
+
+  if (cleanEndpoint.startsWith('/notes/') && method === 'DELETE') {
+    const id = cleanEndpoint.replace('/notes/', '');
+    mockDb.notes = mockDb.notes.filter((n) => n.id !== id);
+    mockDb.save();
+    return { success: true, message: 'Note deleted' };
+  }
+
+  // 15. CLIENT MEETINGS (Module 3 Box 1)
+  if (cleanEndpoint === '/client-meetings') {
+    if (method === 'GET') {
+      return { success: true, data: mockDb.clientMeetings };
+    }
+    if (method === 'POST') {
+      const newMtg = {
+        id: 'mtg-' + Date.now(),
+        clientId: data?.clientId || 'clt-custom',
+        contactPerson: data?.contactPerson || 'Client Contact',
+        designation: data?.designation || 'Manager',
+        companyName: data?.companyName || 'Company',
+        area: data?.area || 'Hyderabad',
+        contactNumber: data?.contactNumber || '+91 90000 00000',
+        employeeId: currentUser.id,
+        employeeName: currentUser.name,
+        scheduledTime: data?.scheduledTime || 'Today',
+        status: data?.status || 'SCHEDULED',
+        clientStatus: data?.clientStatus || 'Active',
+        discussionNotes: data?.discussionNotes || '',
+        createdAt: new Date().toISOString(),
+      };
+      mockDb.clientMeetings.unshift(newMtg);
+      mockDb.save();
+      return { success: true, data: newMtg };
+    }
+  }
+
+  if (cleanEndpoint.startsWith('/client-meetings/') && cleanEndpoint.endsWith('/start') && method === 'POST') {
+    const id = cleanEndpoint.replace('/client-meetings/', '').replace('/start', '');
+    const meeting = mockDb.clientMeetings.find((m) => m.id === id);
+    if (meeting) {
+      meeting.status = 'IN_MEETING';
+      meeting.meetingStartTime = new Date().toISOString();
+      mockDb.save();
+      return { success: true, data: meeting, message: 'Meeting timer started' };
+    }
+    return { success: false, message: 'Meeting not found' };
+  }
+
+  if (cleanEndpoint.startsWith('/client-meetings/') && cleanEndpoint.endsWith('/stop') && method === 'POST') {
+    const id = cleanEndpoint.replace('/client-meetings/', '').replace('/stop', '');
+    const meeting = mockDb.clientMeetings.find((m) => m.id === id);
+    if (meeting) {
+      meeting.status = 'COMPLETED';
+      meeting.meetingStopTime = new Date().toISOString();
+      if (meeting.meetingStartTime) {
+        const diffMs = new Date(meeting.meetingStopTime).getTime() - new Date(meeting.meetingStartTime).getTime();
+        meeting.durationMinutes = Math.max(1, Math.round(diffMs / 60000));
+      } else {
+        meeting.durationMinutes = data?.durationMinutes || 45;
+      }
+      if (data?.discussionNotes) meeting.discussionNotes = data.discussionNotes;
+      if (data?.clientStatus) meeting.clientStatus = data.clientStatus;
+      mockDb.save();
+      return { success: true, data: meeting, message: 'Meeting completed successfully' };
+    }
+    return { success: false, message: 'Meeting not found' };
+  }
+
+  if (cleanEndpoint.startsWith('/client-meetings/') && cleanEndpoint.endsWith('/upload-photo') && method === 'POST') {
+    const id = cleanEndpoint.replace('/client-meetings/', '').replace('/upload-photo', '');
+    const meeting = mockDb.clientMeetings.find((m) => m.id === id);
+    if (meeting) {
+      meeting.photoUrl = data?.photoUrl;
+      // Also register into checkins and update employee live location photo
+      mockDb.checkins.unshift({
+        id: 'chk-' + Date.now(),
+        checkinId: 'CHK-' + Math.floor(5000 + Math.random() * 1000),
+        employeeId: meeting.employeeId,
+        clientId: meeting.clientId,
+        locationName: meeting.area + ' - ' + meeting.companyName,
+        latitude: 17.44 + Math.random() * 0.05,
+        longitude: 78.38 + Math.random() * 0.05,
+        notes: `Meeting photo uploaded for ${meeting.contactPerson} (${meeting.companyName})`,
+        photoUrl: data?.photoUrl,
+        createdAt: new Date().toISOString(),
+      });
+      const loc = mockDb.employeeLocations.find((l) => l.employeeId === meeting.employeeId);
+      if (loc) {
+        loc.lastPhotoUrl = data?.photoUrl;
+        loc.lastActive = 'Just now';
+        loc.currentArea = meeting.area;
+      }
+      mockDb.save();
+      return { success: true, data: meeting, message: 'Photo uploaded successfully' };
+    }
+    return { success: false, message: 'Meeting not found' };
+  }
+
+  // 16. WORK STATUS REPORTS (Module 3 Box 3) - Synced to Admin & CEO
+  if (cleanEndpoint === '/work-reports') {
+    if (method === 'GET') {
+      return { success: true, data: mockDb.workReports };
+    }
+    if (method === 'POST') {
+      const newReport = {
+        id: 'rep-' + Date.now(),
+        reportId: 'REP-' + Math.floor(100 + Math.random() * 900),
+        employeeId: currentUser.id,
+        employeeName: currentUser.name,
+        employeeAvatar: currentUser.avatar,
+        employeeDesignation: currentUser.designation || 'Marketing Executive',
+        title: data?.title || 'Daily Work Status Report',
+        date: data?.date || new Date().toISOString().split('T')[0],
+        summary: data?.summary || '',
+        meetingsConducted: Number(data?.meetingsConducted) || 1,
+        leadsContacted: Number(data?.leadsContacted) || 3,
+        dealsProgressed: Number(data?.dealsProgressed) || 1,
+        revenueInfluenced: Number(data?.revenueInfluenced) || 0,
+        challenges: data?.challenges || '',
+        attachmentName: data?.attachmentName || 'Daily_Work_Summary.pdf',
+        attachmentSize: data?.attachmentSize || '1.8 MB',
+        status: 'SUBMITTED',
+        createdAt: new Date().toISOString(),
+      };
+      mockDb.workReports.unshift(newReport);
+      // Notify Admin and CEO
+      mockDb.notifications.unshift({
+        id: 'notif-' + Date.now(),
+        userId: 'usr-admin',
+        title: 'New Work Report Submitted 📋',
+        message: `${currentUser.name} uploaded work report: "${newReport.title}". Reflected on Admin and CEO Dashboards.`,
+        type: 'TASK_ASSIGNED',
+        isRead: false,
+        createdAt: new Date().toISOString(),
+      });
+      mockDb.notifications.unshift({
+        id: 'notif-' + (Date.now() + 1),
+        userId: 'usr-ceo',
+        title: 'Marketing Work Report Received 📈',
+        message: `${currentUser.name} submitted daily status update (${newReport.meetingsConducted} meetings, Rs. ${newReport.revenueInfluenced.toLocaleString('en-IN')} pipeline).`,
+        type: 'TASK_ASSIGNED',
+        isRead: false,
+        createdAt: new Date().toISOString(),
+      });
+      mockDb.save();
+      return { success: true, data: newReport, message: 'Report submitted and reflected in Admin & CEO Dashboards!' };
+    }
+  }
+
+  if (cleanEndpoint.startsWith('/work-reports/') && cleanEndpoint.endsWith('/review') && method === 'PATCH') {
+    const id = cleanEndpoint.replace('/work-reports/', '').replace('/review', '');
+    const report = mockDb.workReports.find((r) => r.id === id);
+    if (report) {
+      report.status = data?.status || 'REVIEWED';
+      report.reviewedBy = currentUser.name;
+      report.reviewedAt = new Date().toISOString();
+      if (data?.adminRemarks) report.adminRemarks = data.adminRemarks;
+      mockDb.save();
+      return { success: true, data: report, message: 'Report reviewed' };
+    }
+    return { success: false, message: 'Report not found' };
+  }
+
+  // 17. DEAL CLOSING REPORTS (Admin Module 2)
+  if (cleanEndpoint === '/deal-reports') {
+    if (method === 'GET') {
+      return { success: true, data: mockDb.dealReports };
+    }
+    if (method === 'POST') {
+      const budgetAmount = Number(data?.budgetAmount) || 500000;
+      const reportNum = mockDb.dealReports.length + 1;
+      const newDealReport = {
+        id: 'dcr-' + Date.now(),
+        reportId: `DCR-2026-${String(reportNum).padStart(3, '0')}`,
+        clientId: data?.clientId,
+        clientName: data?.clientName || 'Client',
+        organization: data?.organization || data?.clientName || 'Client Org',
+        contactPerson: data?.contactPerson || 'Lead Person',
+        contactDesignation: data?.contactDesignation || 'Director',
+        area: data?.area || 'Hyderabad',
+        dealTitle: data?.dealTitle || 'Enterprise Software Subscription Agreement',
+        budgetAmount,
+        closedDate: data?.closedDate || new Date().toISOString().split('T')[0],
+        paymentMilestones: data?.paymentMilestones || '50% Advance, 50% on Delivery',
+        scopeOfWork: data?.scopeOfWork || 'Implementation of Kalpra CRM solution.',
+        wonReason: data?.wonReason || 'Superior features and local technical support.',
+        closedById: currentUser.id,
+        closedByName: currentUser.name,
+        createdAt: new Date().toISOString(),
+      };
+      mockDb.dealReports.unshift(newDealReport);
+
+      // Update lead to Won if lead exists
+      const lead = mockDb.leads.find((l) => l.clientId === data?.clientId || l.id === data?.leadId);
+      if (lead) {
+        lead.status = 'Won';
+        lead.dealValue = budgetAmount;
+      }
+
+      // Update client status
+      const client = mockDb.clients.find((c) => c.id === data?.clientId);
+      if (client) {
+        client.status = 'Closed Won';
+      }
+
+      // Notify CEO
+      mockDb.notifications.unshift({
+        id: 'notif-' + Date.now(),
+        userId: 'usr-ceo',
+        title: `Deal Closed with Budget Rs. ${budgetAmount.toLocaleString('en-IN')} 🏆`,
+        message: `${currentUser.name} closed the deal for ${newDealReport.clientName}. Closing report ${newDealReport.reportId} generated.`,
+        type: 'DEAL_WON',
+        isRead: false,
+        createdAt: new Date().toISOString(),
+      });
+
+      mockDb.save();
+      return { success: true, data: newDealReport, message: 'Deal closed and report generated successfully!' };
+    }
+  }
+
+  // 18. FOLLOW-UP STATUS & OTHER CUSTOM STATUS (Module 3 Box 2)
+  if (cleanEndpoint.startsWith('/followups/') && cleanEndpoint.endsWith('/status') && method === 'PATCH') {
+    const id = cleanEndpoint.replace('/followups/', '').replace('/status', '');
+    const followup = mockDb.followups.find((f) => f.id === id);
+    if (followup) {
+      followup.status = data?.status || followup.status;
+      if (data?.customStatusText !== undefined) {
+        followup.customStatusText = data.customStatusText;
+      }
+      if (data?.notes) followup.notes = data.notes;
+      mockDb.save();
+      return { success: true, data: followup, message: 'Follow-up status updated' };
+    }
+    return { success: false, message: 'Follow-up not found' };
+  }
+
+  // 19. LEAD NOTES & CREATION WITH USER REQUIREMENTS (Module 2)
+  if (cleanEndpoint.startsWith('/leads/') && cleanEndpoint.endsWith('/notes') && method === 'PATCH') {
+    const id = cleanEndpoint.replace('/leads/', '').replace('/notes', '');
+    const lead = mockDb.leads.find((l) => l.id === id);
+    if (lead) {
+      lead.notes = data?.notes;
+      mockDb.save();
+      return { success: true, data: lead, message: 'Lead notes updated' };
+    }
+    return { success: false, message: 'Lead not found' };
+  }
+
+  // 20. TEAM MANAGEMENT & LOCATION MONITORING (Admin Module 3 & Extra Feature)
+  if (cleanEndpoint === '/team/add' && method === 'POST') {
+    const newUser = {
+      id: 'usr-' + Date.now(),
+      name: data?.name || 'New Employee',
+      email: data?.email || `employee${Date.now()}@kalpracrm.com`,
+      role: (data?.role as any) || 'EMPLOYEE',
+      phone: data?.phone || '+91 98765 00000',
+      designation: data?.designation || 'Marketing & Sales Executive',
+      department: data?.department || 'Marketing & Sales',
+      area: data?.area || 'Hitec City, Hyderabad',
+      avatar:
+        data?.avatar ||
+        'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80',
+    };
+    mockDb.users.push(newUser);
+    // Add default live tracking entry
+    mockDb.employeeLocations.push({
+      employeeId: newUser.id,
+      employeeName: newUser.name,
+      designation: newUser.designation,
+      avatar: newUser.avatar,
+      currentArea: newUser.area,
+      city: 'Hyderabad',
+      latitude: 17.44,
+      longitude: 78.38,
+      lastActive: 'Just registered',
+      status: 'ON_FIELD',
+      batteryLevel: 95,
+    });
+    mockDb.save();
+    return { success: true, data: newUser, message: 'Team member added successfully' };
+  }
+
+  if (cleanEndpoint === '/team/assign-lead' && method === 'POST') {
+    const lead = mockDb.leads.find((l) => l.id === data?.leadId);
+    if (lead) {
+      lead.assignedToId = data?.employeeId;
+      mockDb.save();
+      return { success: true, data: lead, message: 'Lead assigned to team member' };
+    }
+    return { success: false, message: 'Lead not found' };
+  }
+
+  if (cleanEndpoint === '/tracking/locations' && method === 'GET') {
+    return { success: true, data: mockDb.employeeLocations };
+  }
+
+  if (cleanEndpoint === '/tracking/update-location' && method === 'POST') {
+    const loc = mockDb.employeeLocations.find((l) => l.employeeId === currentUser.id);
+    if (loc) {
+      if (data?.currentArea) loc.currentArea = data.currentArea;
+      if (data?.latitude) loc.latitude = data.latitude;
+      if (data?.longitude) loc.longitude = data.longitude;
+      if (data?.status) loc.status = data.status;
+      if (data?.currentClient) loc.currentClient = data.currentClient;
+      if (data?.photoUrl) loc.lastPhotoUrl = data.photoUrl;
+      loc.lastActive = 'Just now';
+      mockDb.save();
+      return { success: true, data: loc };
+    }
+    return { success: false, message: 'Location entry not found' };
   }
 
   return { success: true, message: 'OK', data: [] };
