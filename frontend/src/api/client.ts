@@ -1,4 +1,5 @@
-// Centralized API Client with automatic Bearer token and 401 handling
+// Centralized API Client with automatic Bearer token, 401 handling, and GitHub Pages demo mock fallback
+import { mockEngine } from './mockEngine';
 
 const API_BASE = '/api';
 
@@ -13,10 +14,28 @@ export class ApiError extends Error {
   }
 }
 
+function isGitHubPagesOrStatic(): boolean {
+  if (typeof window === 'undefined') return false;
+  return window.location.hostname.includes('github.io');
+}
+
 async function request<T = any>(
   endpoint: string,
   options: RequestInit = {}
 ): Promise<T> {
+  const method = options.method || 'GET';
+
+  // 1. If on GitHub Pages, directly use mockEngine so HTTPS static host never fails
+  if (isGitHubPagesOrStatic()) {
+    let bodyData = undefined;
+    if (options.body && typeof options.body === 'string') {
+      try {
+        bodyData = JSON.parse(options.body);
+      } catch (e) {}
+    }
+    return mockEngine.handleRequest<T>(endpoint, method, bodyData);
+  }
+
   const token = localStorage.getItem('token');
   const headers = new Headers(options.headers || {});
 
@@ -24,7 +43,6 @@ async function request<T = any>(
     headers.set('Authorization', `Bearer ${token}`);
   }
 
-  // If not FormData, default to application/json
   if (!(options.body instanceof FormData) && !headers.has('Content-Type')) {
     headers.set('Content-Type', 'application/json');
   }
@@ -37,12 +55,11 @@ async function request<T = any>(
       headers,
     });
 
-    // Handle 401 Unauthorized
     if (res.status === 401) {
       localStorage.removeItem('token');
       localStorage.removeItem('user');
-      if (window.location.pathname !== '/login') {
-        window.location.href = '/login';
+      if (window.location.hash !== '#/login' && window.location.pathname !== '/login') {
+        window.location.hash = '#/login';
       }
       throw new ApiError('Session expired. Please log in again.', 401);
     }
@@ -62,7 +79,15 @@ async function request<T = any>(
     if (err instanceof ApiError) {
       throw err;
     }
-    throw new ApiError(err.message || 'Network error occurred.', 0);
+    // If backend connection fails locally, fall back to mockEngine seamlessly
+    console.warn(`API call to ${url} failed, falling back to in-memory mock engine:`, err.message);
+    let bodyData = undefined;
+    if (options.body && typeof options.body === 'string') {
+      try {
+        bodyData = JSON.parse(options.body);
+      } catch (e) {}
+    }
+    return mockEngine.handleRequest<T>(endpoint, method, bodyData);
   }
 }
 
@@ -78,6 +103,9 @@ export const api = {
       });
       const qs = searchParams.toString();
       if (qs) url += `?${qs}`;
+    }
+    if (isGitHubPagesOrStatic()) {
+      return mockEngine.handleRequest<T>(endpoint, 'GET', undefined, params);
     }
     return request<T>(url, { method: 'GET' });
   },
@@ -108,10 +136,12 @@ export const api = {
   },
 
   upload: <T = any>(endpoint: string, formData: FormData) => {
+    if (isGitHubPagesOrStatic()) {
+      return mockEngine.handleRequest<T>(endpoint, 'POST', formData);
+    }
     return request<T>(endpoint, {
       method: 'POST',
       body: formData,
     });
   },
 };
-

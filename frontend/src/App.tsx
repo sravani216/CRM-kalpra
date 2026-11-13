@@ -1,5 +1,5 @@
 import React from 'react';
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { HashRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { Login } from './pages/Login';
 import { EmployeeDashboard } from './pages/employee/EmployeeDashboard';
@@ -60,7 +60,7 @@ const RootRedirector: React.FC = () => {
 export const App: React.FC = () => {
   return (
     <AuthProvider>
-      <BrowserRouter>
+      <HashRouter>
         <Routes>
           <Route path="/login" element={<Login />} />
           <Route path="/" element={<RootRedirector />} />
@@ -98,10 +98,9 @@ export const App: React.FC = () => {
           {/* Fallback */}
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
-      </BrowserRouter>
+      </HashRouter>
     </AuthProvider>
   );
 };
 
 export default App;
-
