@@ -1,0 +1,219 @@
+// ==============================================================================
+// Prisma Schema for Internal Marketing CRM (Phase 1)
+// Provider: PostgreSQL
+// ==============================================================================
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ------------------------------------------------------------------------------
+// ENUMS
+// ------------------------------------------------------------------------------
+
+enum Role {
+  CEO
+  MARKETING_HEAD
+  EMPLOYEE
+}
+
+enum LeadStatus {
+  NEW
+  APPROACHED
+  FOLLOW_UP
+  MEETING_SCHEDULED
+  CONVERTED
+  LOST
+}
+
+enum TaskType {
+  CLIENT_MEETING
+  FOLLOW_UP
+  REPORT
+  GENERAL
+}
+
+enum TaskStatus {
+  PENDING
+  IN_PROGRESS
+  COMPLETED
+  MISSED
+}
+
+enum DealStatus {
+  PROPOSAL
+  NEGOTIATION
+  CLOSED_WON
+  CLOSED_LOST
+}
+
+// ------------------------------------------------------------------------------
+// MODELS
+// ------------------------------------------------------------------------------
+
+/// User model representing CEO, Marketing Head, and Employees
+model User {
+  id           String   @id @default(uuid())
+  name         String
+  email        String   @unique
+  passwordHash String
+  role         Role     @default(EMPLOYEE)
+  designation  String?
+  phone        String?
+  avatarUrl    String?  // Instagram-style profile picture
+  bio          String?  // Profile bio / status
+  preferences  Json     @default("{\"theme\": \"light\", \"accentColor\": \"#2563eb\", \"compactView\": false, \"notifications\": true}")
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  // Relational mappings
+  createdLeads   Lead[]         @relation("LeadCreatedBy")
+  assignedLeads  Lead[]         @relation("LeadAssignedTo")
+  leadNotes      LeadNote[]     @relation("UserLeadNotes")
+  assignedTasks  TaskSchedule[] @relation("TaskAssignedTo")
+  createdTasks   TaskSchedule[] @relation("TaskAssignedBy")
+  deals          Deal[]         @relation("UserDeals")
+  personalNotes  PersonalNote[] @relation("UserPersonalNotes")
+
+  @@index([role])
+  @@index([role, isActive])
+  @@map("users")
+}
+
+/// Lead model for tracking prospect clients and contact persons
+model Lead {
+  id           String     @id @default(uuid())
+  name         String     // Client / contact person name
+  companyName  String?
+  designation  String?
+  area         String     // Area for regional filtering (e.g. Hitec City, Jubilee Hills)
+  contact      String     // Phone or email
+  approachType String     // e.g. Call, Visit, Email, LinkedIn
+  status       LeadStatus @default(NEW)
+  createdById  String
+  assignedToId String
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+
+  // Relations with strict foreign key constraints
+  createdBy  User           @relation("LeadCreatedBy", fields: [createdById], references: [id], onDelete: Restrict)
+  assignedTo User           @relation("LeadAssignedTo", fields: [assignedToId], references: [id], onDelete: Restrict)
+  notes      LeadNote[]     // Note thread per lead
+  tasks      TaskSchedule[] // Linked meetings or follow-ups
+  deal       Deal?          // Linked deal if converted/negotiating
+
+  @@index([status])
+  @@index([area])
+  @@index([assignedToId])
+  @@index([createdById])
+  @@index([status, area])
+  @@index([createdAt])
+  @@map("leads")
+}
+
+/// LeadNote model for chronological note threads per lead
+model LeadNote {
+  id        String   @id @default(uuid())
+  leadId    String
+  authorId  String
+  content   String   @db.Text
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Cascade on lead deletion to maintain thread integrity; Restrict on author
+  lead   Lead @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  author User @relation("UserLeadNotes", fields: [authorId], references: [id], onDelete: Restrict)
+
+  @@index([leadId])
+  @@index([authorId])
+  @@index([createdAt])
+  @@map("lead_notes")
+}
+
+/// TaskSchedule model covering Client Meetings, Follow-ups, and Daily Work Updates
+model TaskSchedule {
+  id                String     @id @default(uuid())
+  title             String
+  type              TaskType   @default(GENERAL)
+  companyName       String?
+  personName        String?
+  personDesignation String?
+  contact           String?
+  scheduledDate     DateTime
+  startTime         DateTime?  // Start/Stop timer start
+  endTime           DateTime?  // Start/Stop timer end
+  durationMinutes   Int        @default(0) // Recorded/calculated meeting or task duration
+  status            TaskStatus @default(PENDING)
+  photoUrl          String?    // Uploaded meeting proof / photo path
+  reportUrl         String?    // Uploaded report document path
+  reportSummary     String?    @db.Text // Daily work status summary / meeting remarks
+  assignedToId      String
+  assignedById      String     // Allows Marketing Head to assign tasks via +A
+  leadId            String?
+  createdAt         DateTime   @default(now())
+  updatedAt         DateTime   @updatedAt
+
+  // Relations
+  assignedTo User  @relation("TaskAssignedTo", fields: [assignedToId], references: [id], onDelete: Restrict)
+  assignedBy User  @relation("TaskAssignedBy", fields: [assignedById], references: [id], onDelete: Restrict)
+  lead       Lead? @relation(fields: [leadId], references: [id], onDelete: SetNull)
+
+  @@index([scheduledDate])
+  @@index([status])
+  @@index([type])
+  @@index([assignedToId])
+  @@index([assignedById])
+  @@index([leadId])
+  @@index([assignedToId, scheduledDate])
+  @@map("task_schedules")
+}
+
+/// Deal model for Marketing Head's Deals & Revenue Management and CEO Revenue Metrics
+model Deal {
+  id               String     @id @default(uuid())
+  leadId           String     @unique // 1-to-1 link to a converted/progressing Lead
+  ownerId          String     // Employee/Closer handling the deal
+  dealValue        Decimal    @default(0.00) @db.Decimal(12, 2)
+  status           DealStatus @default(PROPOSAL)
+  nextFollowUpDate DateTime?
+  closedAt         DateTime?
+  createdAt        DateTime   @default(now())
+  updatedAt        DateTime   @updatedAt
+
+  // Relations
+  lead  Lead @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  owner User @relation("UserDeals", fields: [ownerId], references: [id], onDelete: Restrict)
+
+  @@index([status])
+  @@index([ownerId])
+  @@index([closedAt])
+  @@index([nextFollowUpDate])
+  @@map("deals")
+}
+
+/// PersonalNote model for Home Page sticky notes / daily scratchpad per user
+model PersonalNote {
+  id        String   @id @default(uuid())
+  userId    String
+  title     String?
+  content   String   @db.Text
+  pinned    Boolean  @default(false)
+  color     String?  @default("yellow") // Yellow, purple, green, blue, rose
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Cascade delete notes when user is deleted
+  user User @relation("UserPersonalNotes", fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([pinned])
+  @@index([createdAt])
+  @@map("personal_notes")
+}
+
